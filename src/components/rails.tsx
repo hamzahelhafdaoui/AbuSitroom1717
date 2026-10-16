@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
   Shield,
+  Satellite,
   AlertTriangle,
   Ship,
   X,
@@ -163,6 +164,51 @@ export function LeftRail(props: {
       )}
 
       <section>
+        <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-subtle">Layers</h2>
+        <p className="mb-2 text-[11px] leading-snug text-subtle">Choose what to draw.</p>
+        <div className="space-y-0.5">
+          {(
+            [
+              ["sites", "Sites", Shield],
+              ["boxes", "Watch boxes", Eye],
+              ["control", "Control areas", Shield],
+              ["vista", "Vista control map", Shield],
+              ["reports", "OSINT reports", FileText],
+              ["news", "News pins", Search],
+              ["ai", "AI brief pins", FileText],
+              ["gdelt", "GDELT events", AlertTriangle],
+              ["osm", "OSM / airfields", Shield],
+              ["vessels", "Vessels (AIS)", Ship],
+              ["lanes", "Lane markers · NOT LIVE AIS", Ship],
+              ["conflict", "Open conflict cites", FileText],
+              ["corridors", "Reported corridors", Eye],
+              ["rsfWatch", "RSF watchlist", Shield],
+              ["firms", "FIRMS thermal", Flame],
+              ["flights", "Flights", Plane],
+              ["thermalRaster", "GIBS thermal raster", Flame],
+              ["grid", "1° grid", Satellite],
+              ["quakes", "USGS quakes", Flame],
+              ["sats", "ISS / sats", Satellite],
+              ["eonet", "EONET", AlertTriangle],
+              ["launches", "Launches", Plane],
+              ["freight", "Freight smear · not a count", Ship],
+            ] as const
+          ).map(([k, label, Icon]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => toggleLayer(k)}
+              className="flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-raised"
+            >
+              <span className={cn("size-2 rounded-full", layers[k] ? "bg-accent" : "bg-border")} />
+              <Icon className="size-3.5 text-muted" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section>
         <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-subtle">Party</h2>
         <div className="flex flex-wrap gap-1">
           {(["all", "saf", "rsf", "mixed", "other_armed", "civilian", "unknown"] as const).map((p) => (
@@ -248,44 +294,6 @@ export function LeftRail(props: {
             </li>
           ) : null}
         </ul>
-      </section>
-
-      <section>
-        <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-subtle">Layers</h2>
-        <div className="space-y-0.5">
-          {(
-            [
-              ["sites", "Sites", Shield],
-              ["boxes", "Watch boxes", Eye],
-              ["control", "Control areas", Shield],
-              ["vista", "Vista control map", Shield],
-              ["reports", "OSINT reports", FileText],
-              ["news", "News pins", Search],
-              ["ai", "AI brief pins", FileText],
-              ["gdelt", "GDELT events", AlertTriangle],
-              ["osm", "OSM / airfields", Shield],
-              ["vessels", "Vessels (AIS)", Ship],
-              ["lanes", "Lane markers · NOT LIVE AIS", Ship],
-              ["conflict", "Open conflict cites", FileText],
-              ["corridors", "Reported corridors", Eye],
-              ["rsfWatch", "RSF watchlist", Shield],
-              ["firms", "FIRMS thermal", Flame],
-              ["flights", "Flights", Plane],
-              ["thermalRaster", "GIBS thermal raster", Flame],
-            ] as const
-          ).map(([k, label, Icon]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => toggleLayer(k)}
-              className="flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-raised"
-            >
-              <span className={cn("size-2 rounded-full", layers[k] ? "bg-accent" : "bg-border")} />
-              <Icon className="size-3.5 text-muted" />
-              <span>{label}</span>
-            </button>
-          ))}
-        </div>
       </section>
 
       {overlay ? null : (

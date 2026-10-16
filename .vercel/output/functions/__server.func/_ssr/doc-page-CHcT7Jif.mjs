@@ -1,4 +1,4 @@
-import { _ as Link } from "../_libs/@tanstack/react-router+[...].mjs";
+import { y as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
 import { j as ArrowLeft, s as Satellite } from "../_libs/lucide-react.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/doc-page-CHcT7Jif.js

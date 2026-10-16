@@ -7,8 +7,8 @@
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
       "hasCanvas": false,
-      "bodyTextLen": 2173,
-      "bodyTextHash": "4e5d9309ef356d3ddf4bce27d665b533302f2465a652e331cd558d2988c6c4db",
+      "bodyTextLen": 2186,
+      "bodyTextHash": "7251d81fb134f16b7a838bd33e57cfc8fce8e9cf4df88a3995000b6130e5d504",
       "bodyTextPrefix": "—·S2 mosaic 2024 cloud — AUTO CHANGE SCAN N E S W UNCLASSIFIED /",
       "horizontalOverflow": false,
       "consoleErrors": [],
@@ -21,8 +21,8 @@
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
       "hasCanvas": false,
-      "bodyTextLen": 2300,
-      "bodyTextHash": "31f86e409ad1d087085ab45b7b571b93871dbd37a8036c98db575744d8ca4a55",
+      "bodyTextLen": 799,
+      "bodyTextHash": "db2a30c2096b10c91fe0ef4ec470a2c612c3a375e0bccc9945c9b65893a48ae5",
       "bodyTextPrefix": "AUTO CHANGE SCAN N E S W UNCLASSIFIED // OSINT THEATER 13.500 30",
       "horizontalOverflow": false,
       "consoleErrors": [],
@@ -32,5 +32,9 @@
   },
   "brandWarnings": [],
   "authWarnings": [],
-  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json",
+  "divergesFromBaseline": true,
+  "baselineReasons": [
+    "baseline unreadable: ENOENT"
+  ]
 }

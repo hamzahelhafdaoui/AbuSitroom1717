@@ -43,36 +43,54 @@ function zoomFor(addrType: string): number {
   return 12;
 }
 
+type EsriJson = {
+  candidates?: { address?: string; location?: { x: number; y: number }; attributes?: { Addr_type?: string; Match_addr?: string } }[];
+};
+
+function hitsFromEsri(json: EsriJson, q: string): PlaceHit[] {
+  const out: PlaceHit[] = [];
+  for (const [i, c] of (json.candidates ?? []).entries()) {
+    const lon = c.location?.x;
+    const lat = c.location?.y;
+    if (lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
+    const kind = c.attributes?.Addr_type || "place";
+    const name = c.address || c.attributes?.Match_addr || q;
+    out.push({
+      id: `esri-${i}-${lat.toFixed(4)}-${lon.toFixed(4)}`,
+      name,
+      label: kind.replace(/([A-Z])/g, " $1").trim(),
+      lat,
+      lon,
+      kind,
+      zoom: zoomFor(kind),
+    });
+  }
+  return out;
+}
+
+function esriUrl(q: string) {
+  return (
+    "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates" +
+    `?f=json&maxLocations=6&outFields=Match_addr,Addr_type&singleLine=${encodeURIComponent(q)}`
+  );
+}
+
+/** Browser fallback if the server geocoder is blocked. Same Esri service, no key. */
+export async function geocodePlacesClient(q: string): Promise<PlaceHit[]> {
+  const query = q.trim();
+  if (query.length < 2 || parseCoord(query)) return [];
+  const res = await fetch(esriUrl(query), { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Geocoder HTTP ${res.status}`);
+  return hitsFromEsri((await res.json()) as EsriJson, query);
+}
+
 /** Esri World Geocoding — the same ArcGIS service the satellite basemap uses. No key. */
 export const searchPlaces = createServerFn({ method: "GET" })
   .inputValidator((data: { q?: string }) => ({ q: String(data?.q ?? "").trim().slice(0, 160) }))
   .handler(async ({ data }): Promise<PlaceHit[]> => {
     const q = data.q;
     if (q.length < 2 || parseCoord(q)) return [];
-    const url =
-      "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates" +
-      `?f=json&maxLocations=6&outFields=Match_addr,Addr_type&singleLine=${encodeURIComponent(q)}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const res = await fetch(esriUrl(q), { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(`Geocoder HTTP ${res.status}`);
-    const json = (await res.json()) as {
-      candidates?: { address?: string; location?: { x: number; y: number }; attributes?: { Addr_type?: string; Match_addr?: string } }[];
-    };
-    const out: PlaceHit[] = [];
-    for (const [i, c] of (json.candidates ?? []).entries()) {
-      const lon = c.location?.x;
-      const lat = c.location?.y;
-      if (lat == null || lon == null || Math.abs(lat) > 90 || Math.abs(lon) > 180) continue;
-      const kind = c.attributes?.Addr_type || "place";
-      const name = c.address || c.attributes?.Match_addr || q;
-      out.push({
-        id: `esri-${i}-${lat.toFixed(4)}-${lon.toFixed(4)}`,
-        name,
-        label: kind.replace(/([A-Z])/g, " $1").trim(),
-        lat,
-        lon,
-        kind,
-        zoom: zoomFor(kind),
-      });
-    }
-    return out;
+    return hitsFromEsri((await res.json()) as EsriJson, q);
   });

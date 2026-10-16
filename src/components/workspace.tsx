@@ -26,6 +26,7 @@ import { cn, daysAgo, mapCommand, mapFit, mapMeasure } from "@/lib/utils";
 import { MapCanvas } from "@/components/map-canvas";
 import { LeftRail, RightRail, type MobileTab } from "@/components/rails";
 import { ControlLegend, DetectPanel } from "@/components/monitor-panels";
+import { ControlDesk, ControlDeskLoader } from "@/components/control-desk";
 import { ClassificationBar, ClockChip, SensorBar, SitroomFx } from "@/components/hud-overlay";
 import { GodseyeHud } from "@/components/godseye-hud";
 import { ImageryReviewWorkbench } from "@/components/imagery-review";
@@ -37,7 +38,7 @@ import { BasemapPicker, LayerStack } from "@/components/map-chrome";
 import { FeedHealth } from "@/components/feed-health";
 import { getS1Scene } from "@/lib/s1";
 import { CONFLICT_CITES } from "@/data/conflict-events";
-import { parseCoord, searchPlaces, type PlaceHit } from "@/lib/geocode";
+import { geocodePlacesClient, parseCoord, searchPlaces, type PlaceHit } from "@/lib/geocode";
 
 const JUMP = [
   { id: "hsss", label: "Khartoum" },
@@ -122,13 +123,13 @@ function DateStrip({
 }
 
 export function Workspace() {
-  const [tab, setTab] = useState<MobileTab>("news");
+  const [tab, setTab] = useState<MobileTab>("layers");
   const [live, setLive] = useState<LiveBundle | null>(null);
   const [liveError, setLiveError] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [boxOpen, setBoxOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [leftOpen, setLeftOpen] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(true);
   const [sweeping, setSweeping] = useState(false);
   const [sweepNote, setSweepNote] = useState<string | null>(null);
   const [brief, setBrief] = useState<AiBrief | null>(null);
@@ -149,6 +150,8 @@ export function Workspace() {
   const [places, setPlaces] = useState<PlaceHit[]>([]);
   const [placeErr, setPlaceErr] = useState<string | null>(null);
   const [placeFor, setPlaceFor] = useState("");
+  const [landed, setLanded] = useState<string | null>(null);
+  const [controlOpen, setControlOpen] = useState(false);
   const placeReq = useRef(0);
   const freightHits = useFreightState((s) => s.hits);
   const customReports = useAppStore((s) => s.customReports);
@@ -201,6 +204,7 @@ export function Workspace() {
   const rightTab = useAppStore((s) => s.rightTab);
   const setRightTab = useAppStore((s) => s.setRightTab);
   const setFlyTarget = useAppStore((s) => s.setFlyTarget);
+  const setSearchPin = useAppStore((s) => s.setSearchPin);
   const setSelectedReport = useAppStore((s) => s.setSelectedReport);
   const detectOn = useAppStore((s) => s.detectOn);
   const look = useAppStore((s) => s.look);
@@ -645,20 +649,25 @@ export function Workspace() {
     }
     setPlaceBusy(true);
     const t = window.setTimeout(() => {
+      const finish = (rows: PlaceHit[], err: string | null) => {
+        if (placeReq.current !== n) return;
+        setPlaces(rows);
+        setPlaceFor(q);
+        setPlaceErr(err);
+        setPlaceBusy(false);
+      };
       searchPlaces({ data: { q } })
-        .then((rows) => {
-          if (placeReq.current !== n) return;
-          setPlaces(rows);
-          setPlaceFor(q);
-          setPlaceErr(null);
+        .then(async (rows) => {
+          if (rows.length) {
+            finish(rows, null);
+            return;
+          }
+          const fallback = await geocodePlacesClient(q).catch(() => [] as PlaceHit[]);
+          finish(fallback, fallback.length ? null : "No place found. Try a city, an address, or lat, lon.");
         })
-        .catch(() => {
-          if (placeReq.current !== n) return;
-          setPlaces([]);
-          setPlaceErr("Place search unavailable");
-        })
-        .finally(() => {
-          if (placeReq.current === n) setPlaceBusy(false);
+        .catch(async () => {
+          const fallback = await geocodePlacesClient(q).catch(() => [] as PlaceHit[]);
+          finish(fallback, fallback.length ? null : "Place search unavailable. Check the name or paste lat, lon.");
         });
     }, 280);
     return () => window.clearTimeout(t);
@@ -666,8 +675,30 @@ export function Workspace() {
 
   function flySearch(lat: number, lon: number, zoom: number, label: string) {
     setFlyTarget({ lat, lon, zoom, label, flat: true });
+    setSearchPin({ lat, lon, label });
+    setLanded(`${label} · ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
     setQuery("");
     setSearchOpen(false);
+    setPlaceErr(null);
+  }
+
+  async function lookupPlaces(q: string) {
+    if (placeFor === q && places.length) return places;
+    setPlaceBusy(true);
+    try {
+      let rows: PlaceHit[] = [];
+      try {
+        rows = await searchPlaces({ data: { q } });
+      } catch {
+        rows = [];
+      }
+      if (!rows.length) rows = await geocodePlacesClient(q).catch(() => []);
+      setPlaces(rows);
+      setPlaceFor(q);
+      return rows;
+    } finally {
+      setPlaceBusy(false);
+    }
   }
 
   async function goSearch() {
@@ -678,21 +709,7 @@ export function Workspace() {
       flySearch(coord.lat, coord.lon, 15.2, `${coord.lat.toFixed(4)}, ${coord.lon.toFixed(4)}`);
       return;
     }
-    let rows = placeFor === q ? places : [];
-    if (!rows.length) {
-      setPlaceBusy(true);
-      try {
-        rows = await searchPlaces({ data: { q } });
-        setPlaces(rows);
-        setPlaceFor(q);
-        setPlaceErr(null);
-      } catch {
-        setPlaceErr("Place search unavailable");
-        rows = [];
-      } finally {
-        setPlaceBusy(false);
-      }
-    }
+    const rows = await lookupPlaces(q);
     const hit = rows[0];
     if (hit) {
       flySearch(hit.lat, hit.lon, hit.zoom, hit.name);
@@ -702,6 +719,8 @@ export function Workspace() {
     if (site) {
       setSelectedSite(site.id);
       setSelectedAlert(null);
+      setSearchPin({ lat: site.lat, lon: site.lon, label: site.name });
+      setLanded(`${site.name} · ${site.lat.toFixed(4)}, ${site.lon.toFixed(4)}`);
       setQuery("");
       setSearchOpen(false);
       return;
@@ -720,7 +739,10 @@ export function Workspace() {
     if (vista) {
       const [lon, lat] = vista.geometry.coordinates;
       flySearch(lat, lon, 12.4, vista.properties.name);
+      return;
     }
+    setPlaceErr("No place found. Try a city, an address, or lat, lon.");
+    setSearchOpen(true);
   }
 
   const selectedSite = SITES.find((s) => s.id === selectedSiteId) ?? null;
@@ -983,7 +1005,7 @@ export function Workspace() {
                   setSearchOpen(true);
                 }}
                 onFocus={() => setSearchOpen(true)}
-                placeholder="City, village, state, or lat, lon  ·  /"
+                placeholder="Any city, address, or lat, lon"
                 aria-label="Search any place or coordinates"
                 className="h-11 w-full bg-transparent pl-10 pr-[4.6rem] text-sm text-fg placeholder:text-subtle"
               />
@@ -994,6 +1016,9 @@ export function Workspace() {
                 Search
               </button>
             </form>
+            {landed ? (
+              <p className="mt-1 truncate px-1 font-mono text-[10px] tracking-wide text-accent">Now at {landed}</p>
+            ) : null}
             {searchOpen && query.trim().length >= 2 ? (
               <div className="hud-panel absolute inset-x-0 top-[calc(100%+6px)] z-30 max-h-80 overflow-auto py-1">
                 {searchHits.coordHit ? (
@@ -1202,6 +1227,17 @@ export function Workspace() {
             >
               GULF {liveShipCount} AIS
             </button>
+            <button
+              type="button"
+              title="Only the locked admin account can change control. Everyone else can look."
+              onClick={() => setControlOpen((v) => !v)}
+              className={cn(
+                "h-8 border px-2.5 font-mono text-[10px] tracking-wider backdrop-blur-sm",
+                controlOpen ? "border-accent bg-accent text-accent-fg" : "border-border bg-bg/80 text-muted hover:text-fg",
+              )}
+            >
+              CONTROL
+            </button>
             <span
               title="Port Sudan, Suakin, Tokar, Trinkitat, Jeddah, Yanbu, Bab el-Mandeb. No AISStream key. Drawings on those lanes are not ships."
               className="inline-flex h-8 items-center border border-rsf/60 bg-bg/80 px-2.5 font-mono text-[10px] tracking-wider text-rsf"
@@ -1224,6 +1260,13 @@ export function Workspace() {
           </div>
         </div>
       </div>
+
+      <ControlDeskLoader />
+      {controlOpen ? (
+        <div className="pointer-events-none absolute left-3 top-[8.5rem] z-40 w-[min(22rem,calc(100vw-1.5rem))]">
+          <ControlDesk onClose={() => setControlOpen(false)} />
+        </div>
+      ) : null}
 
       <div className={cn("pointer-events-none absolute right-3 top-[11.5rem] z-20 max-h-[calc(100dvh-12.5rem)] md:top-[13.5rem]", deskOpen && "lg:right-[26.2rem]")}>
         <div className="pointer-events-auto max-h-[calc(100dvh-12.5rem)] overflow-y-auto">

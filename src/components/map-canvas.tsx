@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, RasterTileSource, StyleSpecification } from "maplibre-gl";
 import { SITES } from "@/data/catalog";
 import { FACTION_META, type OsintReport } from "@/lib/osint";
-import { controlZonesFor, isUsefulOsm, mergedControlCities } from "@/lib/control";
+import { applyZoneEdits, isUsefulOsm, mergedControlCities } from "@/lib/control";
 import { circlePoly, type BriefAnno } from "@/lib/briefing";
 import { DETECT_KLASS, type DetectHit } from "@/lib/imagery-detect";
 import { rsfWatchResolved } from "@/data/rsf-watch";
@@ -23,7 +23,7 @@ import {
   type VesselEvent,
   type WatchBox,
 } from "@/lib/types";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, type LayerKey } from "@/lib/store";
 import { cn, snapshotUrl } from "@/lib/utils";
 import { cinematicFit, cinematicFly, pitchForZoom, spyEase } from "@/lib/spy-cam";
 import { inspectCam, inspectZoomForKlass } from "@/lib/inspect-zoom";
@@ -269,8 +269,7 @@ function baseStyle(date: string, imagery: ImagerySource): StyleSpecification {
   };
 }
 
-function controlFc(theater = "sdn"): FC {
-  const zones = controlZonesFor(theater as "sdn");
+function controlFc(zones: { id: string; faction: string; label: string; note: string; polygon: [number, number][] }[]): FC {
   return {
     type: "FeatureCollection",
     features: zones.map((z) => {
@@ -286,8 +285,7 @@ function controlFc(theater = "sdn"): FC {
   };
 }
 
-function controlLabelFc(theater = "sdn"): FC {
-  const zones = controlZonesFor(theater as "sdn");
+function controlLabelFc(zones: { faction: string; label: string; polygon: [number, number][] }[]): FC {
   return {
     type: "FeatureCollection",
     features: zones.map((z) => {
@@ -586,6 +584,78 @@ function StaticSatellite({
   );
 }
 
+function applyOverlayVis(
+  map: MlMap,
+  layers: Record<LayerKey, boolean>,
+  imagery: ImagerySource,
+  briefingOn: boolean,
+  detectOn: boolean,
+  s1On: boolean,
+) {
+  const setVis = (id: string, on: boolean) => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  };
+  setVis("gmaps", imagery === "gmaps");
+  setVis("osm", imagery === "osm");
+  setVis("night", imagery === "night");
+  setVis("dark", imagery === "dark");
+  setVis("dark-ref", imagery === "dark");
+  setVis("viirs", imagery === "viirs");
+  setVis("hls", imagery === "s2");
+  setVis("s2cloudless", imagery === "s2cloudless");
+  setVis("thermal-raster", layers.thermalRaster === true);
+  setVis("boxes-fill", layers.boxes === true);
+  setVis("boxes-line", layers.boxes === true);
+  setVis("firms-glow", layers.firms === true);
+  setVis("firms-core", layers.firms === true);
+  setVis("flights", layers.flights === true);
+  setVis("flights-icon", layers.flights === true);
+  setVis("flight-trails", layers.flights === true);
+  setVis("surv-grid", layers.grid === true);
+  setVis("vessels", layers.vessels === true);
+  setVis("vessels-icon", layers.vessels === true);
+  setVis("lane-markers", layers.lanes === true);
+  setVis("lane-labels", layers.lanes === true);
+  setVis("conflict", layers.conflict === true);
+  setVis("esri", imagery === "hires" || imagery === "s2" || imagery === "viirs" || (imagery === "s1" && !s1On));
+  setVis("s1", imagery === "s1" && s1On);
+  setVis("sea-lanes", layers.lanes === true);
+  setVis("corridors", layers.corridors === true);
+  setVis("rsf-watch", layers.rsfWatch === true);
+  setVis("rsf-watch-glow", layers.rsfWatch === true);
+  const controlOn = layers.control === true;
+  setVis("control-fill", controlOn && imagery === "dark");
+  setVis("control-line", controlOn);
+  setVis("control-line-dash", controlOn);
+  setVis("control-cities", controlOn);
+  setVis("control-labels", controlOn && imagery === "dark");
+  if (map.getLayer("control-fill")) map.setPaintProperty("control-fill", "fill-opacity", 0.22);
+  const vistaOn = layers.vista === true;
+  setVis("vista-fill", vistaOn && imagery === "dark");
+  setVis("vista-line", vistaOn);
+  setVis("vista-div", vistaOn);
+  setVis("vista-div-label", vistaOn);
+  setVis("sites", layers.sites === true);
+  setVis("osint-reports", layers.reports === true);
+  setVis("news-pts", layers.news === true);
+  setVis("ai-pts", layers.ai === true);
+  setVis("gdelt", layers.gdelt === true);
+  setVis("gdelt-glow", layers.gdelt === true);
+  setVis("osm-pts", layers.osm === true);
+  setVis("brief-fill", briefingOn);
+  setVis("brief-line", briefingOn);
+  setVis("brief-pts", briefingOn);
+  setVis("detect-fill", detectOn);
+  setVis("detect-line", detectOn);
+  setVis("detect-pts", detectOn);
+  setVis("quakes", layers.quakes === true);
+  setVis("sats", layers.sats === true);
+  setVis("eonet", layers.eonet === true);
+  setVis("launches", layers.launches === true);
+  setVis("freight-pts", layers.freight === true);
+  setVis("hazard-pts", true);
+}
+
 interface Props {
   boxes: WatchBox[];
   firms: ThermalEvent[];
@@ -621,6 +691,7 @@ export function MapCanvas({
   const [engine, setEngine] = useState<"static" | "gl">("static");
   const [cursor, setCursor] = useState("—");
   const [mapReady, setMapReady] = useState(false);
+  const [visTick, setVisTick] = useState(0);
   const pendingSlew = useRef<{ lon: number; lat: number; zoom: number; label?: string; flat?: boolean } | null>(null);
   const layers = useAppStore((s) => s.layers);
   const imagery = useAppStore((s) => s.imagery);
@@ -638,6 +709,9 @@ export function MapCanvas({
   const flyTarget = useAppStore((s) => s.flyTarget);
   const setFlyTarget = useAppStore((s) => s.setFlyTarget);
   const controlUpdates = useAppStore((s) => s.controlUpdates);
+  const deskCities = useAppStore((s) => s.deskCities);
+  const deskZones = useAppStore((s) => s.deskZones);
+  const searchPin = useAppStore((s) => s.searchPin);
   const detectOn = useAppStore((s) => s.detectOn);
   const orbitOn = useAppStore((s) => s.orbitOn);
   const setOrbitOn = useAppStore((s) => s.setOrbitOn);
@@ -882,7 +956,8 @@ export function MapCanvas({
           },
         });
 
-        map.addSource("control", { type: "geojson", data: controlFc(state.theaterId) });
+        const zonesNow = applyZoneEdits(state.theaterId, state.deskZones);
+        map.addSource("control", { type: "geojson", data: controlFc(zonesNow) });
         map.addLayer({
           id: "control-fill",
           type: "fill",
@@ -907,11 +982,11 @@ export function MapCanvas({
           paint: { "line-color": FACTION_META.contested.color, "line-width": 2.8, "line-opacity": 0.95, "line-dasharray": [2.4, 1.6] },
         }, "sites");
 
-        const cities = mergedControlCities(state.controlUpdates);
+        const cities = state.deskCities ?? mergedControlCities(state.controlUpdates);
         map.addSource("control-cities", { type: "geojson", data: pointFc(cities, (c) => ({ name: c.name, faction: c.faction })) });
         map.addLayer({ id: "control-cities", type: "circle", source: "control-cities", paint: { "circle-radius": 4.5, "circle-color": ["match", ["get", "faction"], "saf", FACTION_META.saf.color, "rsf", FACTION_META.rsf.color, FACTION_META.contested.color], "circle-stroke-width": 1.5, "circle-stroke-color": "#07090b" } });
 
-        map.addSource("control-labels", { type: "geojson", data: controlLabelFc(state.theaterId) });
+        map.addSource("control-labels", { type: "geojson", data: controlLabelFc(zonesNow) });
         map.addLayer({
           id: "control-labels",
           type: "symbol",
@@ -977,8 +1052,8 @@ export function MapCanvas({
         map.addLayer({ id: "gdelt-glow", type: "circle", source: "gdelt", paint: { "circle-radius": 10, "circle-color": "#b45a3c", "circle-opacity": 0.2, "circle-blur": 0.6 } });
         map.addLayer({ id: "gdelt", type: "circle", source: "gdelt", paint: { "circle-radius": 4, "circle-color": "#b45a3c", "circle-stroke-width": 1.2, "circle-stroke-color": "#ece8e1" } });
 
-        map.addSource("osm", { type: "geojson", data: pointFc(osm.filter(isUsefulOsm), (r) => ({ name: r.name, kind: r.kind })) });
-        map.addLayer({ id: "osm", type: "circle", source: "osm", paint: { "circle-radius": 3.2, "circle-color": "#7b93a6", "circle-stroke-width": 1, "circle-stroke-color": "#12110f" } });
+        map.addSource("osm-pts", { type: "geojson", data: pointFc(osm.filter(isUsefulOsm), (r) => ({ name: r.name, kind: r.kind })) });
+        map.addLayer({ id: "osm-pts", type: "circle", source: "osm-pts", paint: { "circle-radius": 3.2, "circle-color": "#7b93a6", "circle-stroke-width": 1, "circle-stroke-color": "#12110f" } });
 
         map.addSource("brief-anno", { type: "geojson", data: annoFc([]) });
         map.addLayer({ id: "brief-fill", type: "fill", source: "brief-anno", filter: ["==", ["geometry-type"], "Polygon"], layout: { visibility: "none" }, paint: { "fill-color": ["coalesce", ["get", "color"], "#d4a017"], "fill-opacity": 0.18 } });
@@ -1017,6 +1092,7 @@ export function MapCanvas({
             "circle-stroke-color": "#12110f",
           },
         });
+        map.addSource("detections", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
         map.addLayer({
           id: "detect-fill",
           type: "fill",
@@ -1118,6 +1194,15 @@ export function MapCanvas({
 
         ready.current = true;
         setEngine("gl");
+        applyOverlayVis(
+          map,
+          useAppStore.getState().layers,
+          useAppStore.getState().imagery,
+          briefingOn,
+          useAppStore.getState().detectOn,
+          Boolean(s1Tiles),
+        );
+        setVisTick((n) => n + 1);
       });
 
       const bindPopup = (layer: string, html: (p: Record<string, unknown>) => string) => {
@@ -1386,67 +1471,8 @@ export function MapCanvas({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready.current) return;
-    const visOn = (on: boolean): "visible" | "none" => (on ? "visible" : "none");
-    const setVis = (id: string, on: boolean) => { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visOn(on)); };
-    setVis("gmaps", imagery === "gmaps");
-    setVis("osm", imagery === "osm");
-    setVis("night", imagery === "night");
-    setVis("dark", imagery === "dark");
-    setVis("dark-ref", imagery === "dark");
-    setVis("viirs", imagery === "viirs");
-    setVis("hls", imagery === "s2");
-    setVis("s2cloudless", imagery === "s2cloudless");
-    setVis("thermal-raster", layers.thermalRaster);
-    setVis("boxes-fill", layers.boxes);
-    setVis("boxes-line", layers.boxes);
-    setVis("firms-glow", layers.firms);
-    setVis("firms-core", layers.firms);
-    setVis("flights", layers.flights);
-    setVis("flights-icon", layers.flights);
-    setVis("flight-trails", layers.flights);
-    setVis("surv-grid", layers.grid === true);
-    setVis("vessels", layers.vessels);
-    setVis("vessels-icon", layers.vessels);
-    setVis("lane-markers", layers.lanes !== false);
-    setVis("lane-labels", layers.lanes !== false);
-    setVis("conflict", layers.conflict !== false);
-    setVis("esri", imagery === "hires" || imagery === "s2" || imagery === "viirs" || (imagery === "s1" && !s1Tiles));
-    setVis("s1", imagery === "s1" && Boolean(s1Tiles));
-    setVis("sea-lanes", layers.lanes !== false);
-    setVis("corridors", layers.corridors);
-    setVis("rsf-watch", layers.rsfWatch);
-    setVis("rsf-watch-glow", layers.rsfWatch);
-    const controlOn = layers.control && imagery === "dark";
-    setVis("control-fill", controlOn);
-    setVis("control-line", controlOn);
-    setVis("control-line-dash", controlOn);
-    setVis("control-cities", controlOn);
-    setVis("control-labels", controlOn);
-    if (map.getLayer("control-fill")) map.setPaintProperty("control-fill", "fill-opacity", 0.22);
-    const vistaOn = layers.vista !== false;
-    setVis("vista-fill", vistaOn && imagery === "dark");
-    setVis("vista-line", vistaOn);
-    setVis("vista-div", vistaOn);
-    setVis("vista-div-label", vistaOn);
-    setVis("osint-reports", layers.reports);
-    setVis("news-pts", layers.news);
-    setVis("ai-pts", layers.ai);
-    setVis("gdelt", layers.gdelt);
-    setVis("gdelt-glow", layers.gdelt);
-    setVis("osm", layers.osm);
-    setVis("brief-fill", briefingOn);
-    setVis("brief-line", briefingOn);
-    setVis("brief-pts", briefingOn);
-    setVis("detect-fill", detectOn);
-    setVis("detect-line", detectOn);
-    setVis("detect-pts", detectOn);
-    setVis("quakes", layers.quakes !== false);
-    setVis("sats", layers.sats !== false);
-    setVis("eonet", layers.eonet !== false);
-    setVis("launches", layers.launches !== false);
-    setVis("freight-pts", layers.freight !== false);
-    setVis("hazard-pts", true);
-  }, [layers, imagery, briefingOn, detectOn, s1Tiles]);
+    applyOverlayVis(map, layers, imagery, briefingOn, detectOn, Boolean(s1Tiles));
+  }, [layers, imagery, briefingOn, detectOn, s1Tiles, visTick, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1534,14 +1560,47 @@ export function MapCanvas({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready.current) return;
+    const zones = applyZoneEdits(theaterId, deskZones);
     const src = map.getSource("control");
-    if (src && "setData" in src) (src as { setData: (d: FC) => void }).setData(controlFc(theaterId));
+    if (src && "setData" in src) (src as { setData: (d: FC) => void }).setData(controlFc(zones));
     const ls = map.getSource("control-labels");
-    if (ls && "setData" in ls) (ls as { setData: (d: FC) => void }).setData(controlLabelFc(theaterId));
-    const cities = mergedControlCities(controlUpdates);
+    if (ls && "setData" in ls) (ls as { setData: (d: FC) => void }).setData(controlLabelFc(zones));
+    const cities = deskCities ?? mergedControlCities(controlUpdates);
     const cs = map.getSource("control-cities");
     if (cs && "setData" in cs) (cs as { setData: (d: FC) => void }).setData(pointFc(cities, (c) => ({ name: c.name, faction: c.faction })));
-  }, [theaterId, controlUpdates]);
+  }, [theaterId, controlUpdates, deskCities, deskZones]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready.current) return;
+    const data: FC = searchPin
+      ? pointFc([{ id: "search", lat: searchPin.lat, lon: searchPin.lon }], () => ({ name: searchPin.label }))
+      : { type: "FeatureCollection", features: [] };
+    if (!map.getSource("search-pin")) {
+      map.addSource("search-pin", { type: "geojson", data });
+      map.addLayer({
+        id: "search-pin-halo",
+        type: "circle",
+        source: "search-pin",
+        paint: { "circle-radius": 16, "circle-color": "#e7c56a", "circle-opacity": 0.35, "circle-blur": 0.4 },
+      });
+      map.addLayer({
+        id: "search-pin",
+        type: "circle",
+        source: "search-pin",
+        paint: { "circle-radius": 6, "circle-color": "#e7c56a", "circle-stroke-width": 2, "circle-stroke-color": "#07090b" },
+      });
+      map.addLayer({
+        id: "search-pin-label",
+        type: "symbol",
+        source: "search-pin",
+        layout: { "text-field": ["get", "name"], "text-size": 12, "text-offset": [0, 1.2], "text-anchor": "top" },
+        paint: { "text-color": "#f3e6c0", "text-halo-color": "#07090b", "text-halo-width": 1.4 },
+      });
+    } else {
+      (map.getSource("search-pin") as unknown as { setData: (d: FC) => void }).setData(data);
+    }
+  }, [searchPin, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1658,6 +1717,17 @@ export function MapCanvas({
     const src = map.getSource("news-pts");
     if (src && "setData" in src) (src as { setData: (d: FC) => void }).setData(pointFc(newsPoints, (r) => ({ name: r.name, count: r.count })));
   }, [newsPoints]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready.current) return;
+    const src = map.getSource("osm-pts");
+    if (src && "setData" in src) {
+      (src as { setData: (d: FC) => void }).setData(
+        pointFc(osm.filter(isUsefulOsm), (r) => ({ name: r.name, kind: r.kind })),
+      );
+    }
+  }, [osm, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;

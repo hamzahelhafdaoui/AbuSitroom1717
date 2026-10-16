@@ -4,6 +4,7 @@ import {
   CONTROL_ZONES,
   FACTION_META,
   type Faction,
+  type ControlZone,
 } from "@/lib/osint";
 import type { OsmSite, Party } from "@/lib/types";
 import type { TheaterId } from "@/lib/theaters";
@@ -260,6 +261,34 @@ export function controlAsOf(cities: ControlCity[]): string {
 export function controlZonesFor(theater: TheaterId) {
   if (theater === "sdn" || theater === "all") return CONTROL_ZONES;
   return [];
+}
+
+export interface ZoneEdit {
+  id: string;
+  faction: Faction;
+  label: string;
+  note: string;
+  confidence: ControlConfidence;
+}
+
+export function applyZoneEdits(theater: TheaterId, edits: ZoneEdit[] | null): ControlZone[] {
+  const base = controlZonesFor(theater);
+  if (!edits?.length) return base;
+  return base.map((z) => {
+    const e = edits.find((x) => x.id === z.id);
+    if (!e) return z;
+    return { ...z, faction: e.faction, label: e.label, note: e.note, confidence: e.confidence };
+  });
+}
+
+export function seedZoneEdits(): ZoneEdit[] {
+  return CONTROL_ZONES.map((z) => ({
+    id: z.id,
+    faction: z.faction,
+    label: z.label,
+    note: z.note,
+    confidence: z.confidence,
+  }));
 }
 
 const JUNK_NAME = /heliport|helipad|pump station|lift station|temple of|\bunnamed\b/i;

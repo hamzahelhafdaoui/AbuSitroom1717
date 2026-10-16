@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ALERTS, WATCH_BOXES } from "@/data/catalog";
 import { seedChangeLog, sortLog } from "@/lib/changelog";
-import type { ControlUpdate } from "@/lib/control";
+import type { ControlCity, ControlUpdate, ZoneEdit } from "@/lib/control";
 import { partyToFaction } from "@/lib/control";
 import type { OsintReport } from "@/lib/osint";
 import type { FuaeRecord } from "@/lib/fuae";
@@ -47,7 +47,37 @@ export type LayerKey =
   | "lanes"
   | "conflict";
 
-export type RightTab = "log" | "queue" | "news" | "brief" | "reports" | "feeds" | "fuae" | "rsf";
+export const LAYERS_OFF: Record<LayerKey, boolean> = {
+  sites: false,
+  firms: false,
+  flights: false,
+  boxes: false,
+  gibs: false,
+  thermalRaster: false,
+  control: false,
+  news: false,
+  reports: false,
+  ai: false,
+  gdelt: false,
+  osm: false,
+  vessels: false,
+  corridors: false,
+  rsfWatch: false,
+  vista: false,
+  quakes: false,
+  sats: false,
+  eonet: false,
+  launches: false,
+  freight: false,
+  grid: false,
+  lanes: false,
+  conflict: false,
+};
+
+/** Bump when the quiet-map default should replace a saved "everything on" layout once. */
+const LAYER_EPOCH = 3;
+
+export type RightTab = "queue" | "reports" | "news" | "brief" | "feeds" | "log" | "fuae" | "rsf";
 
 export interface FlyTarget {
   lat: number;
@@ -87,6 +117,7 @@ interface AppState {
   kindFilter: string;
   reviewFilter: ReviewState | "all";
   layers: Record<LayerKey, boolean>;
+  layerEpoch: number;
   imagery: ImagerySource;
   date: string;
   compareDate: string;
@@ -109,6 +140,9 @@ interface AppState {
   detectOn: boolean;
   theaterId: TheaterId;
   controlUpdates: ControlUpdate[];
+  deskCities: ControlCity[] | null;
+  deskZones: ZoneEdit[] | null;
+  searchPin: { lat: number; lon: number; label: string } | null;
   flyTarget: FlyTarget | null;
   dateLock: boolean;
   fuaeLog: FuaeRecord[];
@@ -143,6 +177,9 @@ interface AppState {
   setDetectOn: (v: boolean) => void;
   setTheater: (id: TheaterId) => void;
   addControlUpdate: (u: ControlUpdate) => void;
+  setDeskCities: (rows: ControlCity[] | null) => void;
+  setDeskZones: (rows: ZoneEdit[] | null) => void;
+  setSearchPin: (pin: { lat: number; lon: number; label: string } | null) => void;
   setFlyTarget: (t: FlyTarget | null) => void;
   setDateLock: (v: boolean) => void;
   ingestFuae: (rows: FuaeRecord[]) => void;
@@ -196,32 +233,8 @@ export const useAppStore = create<AppState>()(
       partyFilter: "all",
       kindFilter: "all",
       reviewFilter: "all",
-      layers: {
-        sites: true,
-        firms: true,
-        flights: true,
-        boxes: true,
-        gibs: true,
-        thermalRaster: false,
-        control: true,
-        news: true,
-        reports: true,
-        ai: true,
-        gdelt: true,
-        osm: false,
-        vessels: true,
-        corridors: true,
-        rsfWatch: true,
-        vista: true,
-        quakes: true,
-        sats: true,
-        eonet: true,
-        launches: true,
-        freight: true,
-        grid: false,
-        lanes: true,
-        conflict: true,
-      },
+      layers: { ...LAYERS_OFF },
+      layerEpoch: LAYER_EPOCH,
       imagery: "s2cloudless",
       date: daysAgo(4),
       compareDate: daysAgo(14),
@@ -247,6 +260,9 @@ export const useAppStore = create<AppState>()(
       globeOn: false,
       theaterId: "sdn",
       controlUpdates: [],
+      deskCities: null,
+      deskZones: null,
+      searchPin: null,
       flyTarget: null,
       dateLock: false,
       fuaeLog: [],
@@ -358,6 +374,9 @@ export const useAppStore = create<AppState>()(
       setTheater: (theaterId) => set({ theaterId }),
       addControlUpdate: (u) =>
         set((s) => ({ controlUpdates: [u, ...s.controlUpdates].slice(0, 80) })),
+      setDeskCities: (deskCities) => set({ deskCities }),
+      setDeskZones: (deskZones) => set({ deskZones }),
+      setSearchPin: (searchPin) => set({ searchPin }),
       setFlyTarget: (flyTarget) =>
         set((s) => {
           if (!flyTarget) return { flyTarget: null };
@@ -437,6 +456,8 @@ export const useAppStore = create<AppState>()(
         chipSamples: s.chipSamples,
         look: s.look,
         globeOn: s.globeOn,
+        layers: s.layers,
+        layerEpoch: s.layerEpoch,
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<AppState>;
@@ -449,26 +470,8 @@ export const useAppStore = create<AppState>()(
           ...current,
           ...p,
           changeLog: sortLog([...have.values()]),
-          layers: {
-            ...current.layers,
-            ...(p.layers ?? {}),
-            control: true,
-            flights: true,
-            vessels: true,
-            osm: p.layers?.osm ?? false,
-            gdelt: p.layers?.gdelt ?? true,
-            corridors: p.layers?.corridors ?? true,
-            rsfWatch: p.layers?.rsfWatch ?? true,
-            vista: p.layers?.vista ?? true,
-            quakes: p.layers?.quakes ?? true,
-            sats: p.layers?.sats ?? true,
-            eonet: p.layers?.eonet ?? true,
-            launches: p.layers?.launches ?? true,
-            freight: p.layers?.freight ?? true,
-            grid: p.layers?.grid ?? false,
-            lanes: p.layers?.lanes ?? true,
-            conflict: p.layers?.conflict ?? true,
-          },
+          layers: (p.layerEpoch ?? 0) >= LAYER_EPOCH ? { ...LAYERS_OFF, ...(p.layers ?? {}) } : { ...LAYERS_OFF },
+          layerEpoch: LAYER_EPOCH,
           controlUpdates: p.controlUpdates ?? [],
           fuaeLog: p.fuaeLog ?? [],
           listOrder: p.listOrder === "oldest" ? "oldest" : "newest",

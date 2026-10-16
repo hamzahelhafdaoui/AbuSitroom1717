@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EthicsRouteImport } from './routes/ethics'
 import { Route as FlyerRouteImport } from './routes/flyer'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MethodsRouteImport } from './routes/methods'
 import { Route as SopRouteImport } from './routes/sop'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -30,6 +32,11 @@ const FlyerRoute = FlyerRouteImport.update({
   path: '/flyer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MethodsRoute = MethodsRouteImport.update({
   id: '/methods',
   path: '/methods',
@@ -40,43 +47,66 @@ const SopRoute = SopRouteImport.update({
   path: '/sop',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ethics': typeof EthicsRoute
   '/flyer': typeof FlyerRoute
+  '/login': typeof LoginRoute
   '/methods': typeof MethodsRoute
   '/sop': typeof SopRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ethics': typeof EthicsRoute
   '/flyer': typeof FlyerRoute
+  '/login': typeof LoginRoute
   '/methods': typeof MethodsRoute
   '/sop': typeof SopRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/ethics': typeof EthicsRoute
   '/flyer': typeof FlyerRoute
+  '/login': typeof LoginRoute
   '/methods': typeof MethodsRoute
   '/sop': typeof SopRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ethics' | '/flyer' | '/methods' | '/sop'
+  fullPaths:
+    '/' | '/ethics' | '/flyer' | '/login' | '/methods' | '/sop' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ethics' | '/flyer' | '/methods' | '/sop'
-  id: '__root__' | '/' | '/ethics' | '/flyer' | '/methods' | '/sop'
+  to:
+    '/' | '/ethics' | '/flyer' | '/login' | '/methods' | '/sop' | '/api/auth/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/ethics'
+    | '/flyer'
+    | '/login'
+    | '/methods'
+    | '/sop'
+    | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EthicsRoute: typeof EthicsRoute
   FlyerRoute: typeof FlyerRoute
+  LoginRoute: typeof LoginRoute
   MethodsRoute: typeof MethodsRoute
   SopRoute: typeof SopRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -102,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FlyerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/methods': {
       id: '/methods'
       path: '/methods'
@@ -116,6 +153,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SopRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -123,8 +167,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EthicsRoute: EthicsRoute,
   FlyerRoute: FlyerRoute,
+  LoginRoute: LoginRoute,
   MethodsRoute: MethodsRoute,
   SopRoute: SopRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

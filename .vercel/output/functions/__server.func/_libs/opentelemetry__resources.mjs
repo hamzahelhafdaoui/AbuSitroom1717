@@ -1,8 +1,8 @@
 import { n as __esmMin, o as __toESM, r as __exportAll } from "../_runtime.mjs";
 import { r as require_src } from "./@mapbox/mcp-devkit-server+[...].mjs";
 import * as util from "util";
-import * as process from "process";
 import { promises } from "fs";
+import * as process from "process";
 import * as child_process from "child_process";
 //#region node_modules/@opentelemetry/resources/build/esm/detectors/platform/node/machine-id/execAsync.js
 var execAsync;

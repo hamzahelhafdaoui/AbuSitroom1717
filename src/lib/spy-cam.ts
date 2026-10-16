@@ -62,7 +62,9 @@ export function cinematicFly(
     }
     const from = map.getCenter();
     const dist = Math.hypot(opts.lat - from.lat, opts.lon - from.lng);
-    const duration = flyMs(map.getZoom(), opts.zoom, dist);
+    const duration = opts.flat
+      ? Math.min(1100, Math.max(320, 260 + dist * 28))
+      : flyMs(map.getZoom(), opts.zoom, dist);
     const inward = opts.zoom > map.getZoom() + 0.2;
     const bearing = opts.flat ? 0 : map.getBearing() + (inward ? 22 + Math.min(24, dist * 6) : -10);
     emitSlew({ phase: "slewing", label: opts.label, duration });
