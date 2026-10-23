@@ -7,16 +7,16 @@ import { r as createServerFn } from "./ssr.mjs";
 import { n as CLAIM_CLASS, t as ACTORS } from "./doctrine-BoQ_KKoM.mjs";
 import { a as FACTION_META, c as imageryLinks, i as CONTROL_ZONES, n as CONTROL_AS_OF, o as SEED_REPORTS, r as CONTROL_SOURCE, s as geocodePlace, t as CATEGORY_META } from "./osint-wXO3XaAY.mjs";
 import { _ as siteInKindGroup, a as KIND_GROUP_LABEL, c as haversineKm, d as isUsefulOsm, f as mergedControlCities, i as IMAGERY, m as padBbox, n as CONFIDENCE_RUBRIC, o as PARTY_LABEL, p as nearest, r as CONTROL_CITIES, s as applyZoneEdits, t as AOI, u as inBbox } from "./control-BsiNbWqm.mjs";
-import { A as Check, C as Eye, D as ClipboardList, E as Copy, O as CircleHelp, S as FileText, T as Download, _ as Minus, a as Ship, b as Focus, c as Ruler, d as Radio, g as Newspaper, h as PanelRight, i as Shield, k as ChevronDown, l as Rocket, m as Plane, n as TriangleAlert, o as Search, p as Plus, r as Sparkles, s as Satellite, t as X, u as RefreshCw, v as LoaderCircle, w as ExternalLink, x as Flame, y as Layers } from "../_libs/lucide-react.mjs";
+import { A as ChevronDown, C as FileText, D as Copy, E as Download, O as ClipboardList, S as Flame, T as ExternalLink, _ as Newspaper, a as Ship, b as Layers, c as Satellite, d as RefreshCw, f as Radio, g as PanelRight, h as Plane, i as Shield, j as Check, k as CircleHelp, l as Ruler, m as Plus, n as TriangleAlert, o as Share2, p as Printer, r as Sparkles, s as Search, t as X, u as Rocket, v as Minus, w as Eye, x as Focus, y as LoaderCircle } from "../_libs/lucide-react.mjs";
 import { a as downloadBlob, c as mapFit, i as daysAgo, l as mapMeasure, n as cn, o as formatUtc, r as copyText, s as mapCommand, t as PARTY_TONE, u as snapshotUrl } from "./utils-D5izKJMm.mjs";
 import { t as Button } from "./button-xwGEA6Gw.mjs";
 import { t as createRequestCache } from "./request-cache-DFna8z3y.mjs";
 import { a as CITATIONS, c as FLIGHTS, d as OSM_SEED, g as createSsrRpc, h as WATCH_BOXES, i as CHANNEL_TONE, l as GDELT_ARCHIVE, m as VESSEL_SEED, n as ALERTS, o as FEED_CHANNELS, p as SITES, s as FEED_SEED, u as OBSERVATIONS } from "./warroom-data-iyrVJsgQ.mjs";
 import { a as getNewsFeed, i as deadReckonVessel, o as laneVessels, r as deadReckon, s as mergeFlights, t as SEA_LANES } from "./traffic-CSkQ9aHv.mjs";
 import { n as create } from "../_libs/zustand.mjs";
-import { a as featuresFromShape, c as parseWeights, d as useAppStore, i as DEFAULT_WEIGHTS, l as predictChip, n as ControlDesk, o as ingestLive, p as useVisibleBoxes, r as ControlDeskLoader, s as modelToKlass, u as serializeWeights } from "./control-desk-BefuxGhT.mjs";
+import { a as featuresFromShape, c as parseWeights, d as useAppStore, i as DEFAULT_WEIGHTS, l as predictChip, n as ControlDesk, o as ingestLive, p as useVisibleBoxes, r as ControlDeskLoader, s as modelToKlass, u as serializeWeights } from "./control-desk-B19UeTXD.mjs";
 import { r as scanInput } from "./satellite-analysis-CBblDv6Y.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-BGfOUaH8.js
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-DTUi-maw.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var getFirmsWindow = createServerFn({ method: "GET" }).inputValidator((data) => {
@@ -5153,6 +5153,70 @@ function StaticSatellite({ date, boxes, firms, flights, onPick }) {
 		]
 	});
 }
+function applyOverlayVis(map, layers, imagery, briefingOn, detectOn, s1On) {
+	const setVis = (id, on) => {
+		if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+	};
+	setVis("gmaps", imagery === "gmaps");
+	setVis("osm", imagery === "osm");
+	setVis("night", imagery === "night");
+	setVis("dark", imagery === "dark");
+	setVis("dark-ref", imagery === "dark");
+	setVis("viirs", imagery === "viirs");
+	setVis("hls", imagery === "s2");
+	setVis("s2cloudless", imagery === "s2cloudless");
+	setVis("thermal-raster", layers.thermalRaster === true);
+	setVis("boxes-fill", layers.boxes === true);
+	setVis("boxes-line", layers.boxes === true);
+	setVis("firms-glow", layers.firms === true);
+	setVis("firms-core", layers.firms === true);
+	setVis("flights", layers.flights === true);
+	setVis("flights-icon", layers.flights === true);
+	setVis("flight-trails", layers.flights === true);
+	setVis("surv-grid", layers.grid === true);
+	setVis("vessels", layers.vessels === true);
+	setVis("vessels-icon", layers.vessels === true);
+	setVis("lane-markers", layers.lanes === true);
+	setVis("lane-labels", layers.lanes === true);
+	setVis("conflict", layers.conflict === true);
+	setVis("esri", imagery === "hires" || imagery === "s2" || imagery === "viirs" || imagery === "s1" && !s1On);
+	setVis("s1", imagery === "s1" && s1On);
+	setVis("sea-lanes", layers.lanes === true);
+	setVis("corridors", layers.corridors === true);
+	setVis("rsf-watch", layers.rsfWatch === true);
+	setVis("rsf-watch-glow", layers.rsfWatch === true);
+	const controlOn = layers.control === true;
+	setVis("control-fill", controlOn && imagery === "dark");
+	setVis("control-line", controlOn);
+	setVis("control-line-dash", controlOn);
+	setVis("control-cities", controlOn);
+	setVis("control-labels", controlOn && imagery === "dark");
+	if (map.getLayer("control-fill")) map.setPaintProperty("control-fill", "fill-opacity", .22);
+	const vistaOn = layers.vista === true;
+	setVis("vista-fill", vistaOn && imagery === "dark");
+	setVis("vista-line", vistaOn);
+	setVis("vista-div", vistaOn);
+	setVis("vista-div-label", vistaOn);
+	setVis("sites", layers.sites === true);
+	setVis("osint-reports", layers.reports === true);
+	setVis("news-pts", layers.news === true);
+	setVis("ai-pts", layers.ai === true);
+	setVis("gdelt", layers.gdelt === true);
+	setVis("gdelt-glow", layers.gdelt === true);
+	setVis("osm-pts", layers.osm === true);
+	setVis("brief-fill", briefingOn);
+	setVis("brief-line", briefingOn);
+	setVis("brief-pts", briefingOn);
+	setVis("detect-fill", detectOn);
+	setVis("detect-line", detectOn);
+	setVis("detect-pts", detectOn);
+	setVis("quakes", layers.quakes === true);
+	setVis("sats", layers.sats === true);
+	setVis("eonet", layers.eonet === true);
+	setVis("launches", layers.launches === true);
+	setVis("freight-pts", layers.freight === true);
+	setVis("hazard-pts", true);
+}
 function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], newsPoints = [], aiEvents = [], gdelt = [], osm = [], vessels = [], briefingOn = false, annotations = [], detections = [], fuae = [], quakes = [], sats = [], eonet = [], launches = [], s1Tiles = null }) {
 	const host = (0, import_react.useRef)(null);
 	const wrap = (0, import_react.useRef)(null);
@@ -5170,6 +5234,7 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 	const [engine, setEngine] = (0, import_react.useState)("static");
 	const [cursor, setCursor] = (0, import_react.useState)("—");
 	const [mapReady, setMapReady] = (0, import_react.useState)(false);
+	const [visTick, setVisTick] = (0, import_react.useState)(0);
 	const pendingSlew = (0, import_react.useRef)(null);
 	const layers = useAppStore((s) => s.layers);
 	const imagery = useAppStore((s) => s.imagery);
@@ -6022,7 +6087,7 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 						"circle-stroke-color": "#ece8e1"
 					}
 				});
-				map.addSource("osm", {
+				map.addSource("osm-pts", {
 					type: "geojson",
 					data: pointFc(osm.filter(isUsefulOsm), (r) => ({
 						name: r.name,
@@ -6030,9 +6095,9 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 					}))
 				});
 				map.addLayer({
-					id: "osm",
+					id: "osm-pts",
 					type: "circle",
-					source: "osm",
+					source: "osm-pts",
 					paint: {
 						"circle-radius": 3.2,
 						"circle-color": "#7b93a6",
@@ -6146,6 +6211,13 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 						"circle-color": "#b38862",
 						"circle-stroke-width": 1.6,
 						"circle-stroke-color": "#12110f"
+					}
+				});
+				map.addSource("detections", {
+					type: "geojson",
+					data: {
+						type: "FeatureCollection",
+						features: []
 					}
 				});
 				map.addLayer({
@@ -6356,6 +6428,8 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 				});
 				ready.current = true;
 				setEngine("gl");
+				applyOverlayVis(map, useAppStore.getState().layers, useAppStore.getState().imagery, briefingOn, useAppStore.getState().detectOn, Boolean(s1Tiles));
+				setVisTick((n) => n + 1);
 			});
 			const bindPopup = (layer, html) => {
 				map.on("click", layer, (e) => {
@@ -6692,74 +6766,15 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 	(0, import_react.useEffect)(() => {
 		const map = mapRef.current;
 		if (!map || !ready.current) return;
-		const visOn = (on) => on ? "visible" : "none";
-		const setVis = (id, on) => {
-			if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visOn(on));
-		};
-		setVis("gmaps", imagery === "gmaps");
-		setVis("osm", imagery === "osm");
-		setVis("night", imagery === "night");
-		setVis("dark", imagery === "dark");
-		setVis("dark-ref", imagery === "dark");
-		setVis("viirs", imagery === "viirs");
-		setVis("hls", imagery === "s2");
-		setVis("s2cloudless", imagery === "s2cloudless");
-		setVis("thermal-raster", layers.thermalRaster);
-		setVis("boxes-fill", layers.boxes);
-		setVis("boxes-line", layers.boxes);
-		setVis("firms-glow", layers.firms);
-		setVis("firms-core", layers.firms);
-		setVis("flights", layers.flights);
-		setVis("flights-icon", layers.flights);
-		setVis("flight-trails", layers.flights);
-		setVis("surv-grid", layers.grid === true);
-		setVis("vessels", layers.vessels);
-		setVis("vessels-icon", layers.vessels);
-		setVis("lane-markers", layers.lanes !== false);
-		setVis("lane-labels", layers.lanes !== false);
-		setVis("conflict", layers.conflict !== false);
-		setVis("esri", imagery === "hires" || imagery === "s2" || imagery === "viirs" || imagery === "s1" && !s1Tiles);
-		setVis("s1", imagery === "s1" && Boolean(s1Tiles));
-		setVis("sea-lanes", layers.lanes !== false);
-		setVis("corridors", layers.corridors);
-		setVis("rsf-watch", layers.rsfWatch);
-		setVis("rsf-watch-glow", layers.rsfWatch);
-		const controlOn = layers.control !== false;
-		setVis("control-fill", controlOn && imagery === "dark");
-		setVis("control-line", controlOn);
-		setVis("control-line-dash", controlOn);
-		setVis("control-cities", controlOn);
-		setVis("control-labels", controlOn && imagery === "dark");
-		if (map.getLayer("control-fill")) map.setPaintProperty("control-fill", "fill-opacity", .22);
-		const vistaOn = layers.vista !== false;
-		setVis("vista-fill", vistaOn && imagery === "dark");
-		setVis("vista-line", vistaOn);
-		setVis("vista-div", vistaOn);
-		setVis("vista-div-label", vistaOn);
-		setVis("osint-reports", layers.reports);
-		setVis("news-pts", layers.news);
-		setVis("ai-pts", layers.ai);
-		setVis("gdelt", layers.gdelt);
-		setVis("gdelt-glow", layers.gdelt);
-		setVis("osm", layers.osm);
-		setVis("brief-fill", briefingOn);
-		setVis("brief-line", briefingOn);
-		setVis("brief-pts", briefingOn);
-		setVis("detect-fill", detectOn);
-		setVis("detect-line", detectOn);
-		setVis("detect-pts", detectOn);
-		setVis("quakes", layers.quakes !== false);
-		setVis("sats", layers.sats !== false);
-		setVis("eonet", layers.eonet !== false);
-		setVis("launches", layers.launches !== false);
-		setVis("freight-pts", layers.freight !== false);
-		setVis("hazard-pts", true);
+		applyOverlayVis(map, layers, imagery, briefingOn, detectOn, Boolean(s1Tiles));
 	}, [
 		layers,
 		imagery,
 		briefingOn,
 		detectOn,
-		s1Tiles
+		s1Tiles,
+		visTick,
+		mapReady
 	]);
 	(0, import_react.useEffect)(() => {
 		const map = mapRef.current;
@@ -7049,6 +7064,15 @@ function MapCanvas({ boxes, firms, flights, panelOpen = false, reports = [], new
 			count: r.count
 		})));
 	}, [newsPoints]);
+	(0, import_react.useEffect)(() => {
+		const map = mapRef.current;
+		if (!map || !ready.current) return;
+		const src = map.getSource("osm-pts");
+		if (src && "setData" in src) src.setData(pointFc(osm.filter(isUsefulOsm), (r) => ({
+			name: r.name,
+			kind: r.kind
+		})));
+	}, [osm, mapReady]);
 	(0, import_react.useEffect)(() => {
 		const map = mapRef.current;
 		if (!map || !ready.current) return;
@@ -7546,8 +7570,18 @@ function briefingHtml(flights, firms, log) {
 <h2>Live ingest snapshot</h2>
 <p>FIRMS points in AOI this cycle: ${firms.length}. Live flights: ${flights.filter((f) => f.live).length}. Observations in archive: ${OBSERVATIONS.length}. Sites: ${SITES.length}.</p>
 <h2>Methods appendix</h2>
-<p>Optical browse via NASA GIBS (VIIRS / HLS). Sentinel-1 RTC is a cloud-gap scene, not a vehicle layer. Thermal from NASA FIRMS VIIRS 375 m — a gap is not a negative and a point is not a strike. Flights from public ADS-B. AIS type is not cargo; lane markers are not live ships. Conflict cites are a shipped file, not live ACLED ids. Seeded cards are ingested published posts, not AHSR assessments. Human review required. Auto detections stay confidence 1–2. Analytical language: observation / identification / assessment / judgment. Confidence is not probability. Not a targeting product.</p>
-<footer>Abu Hureirah Situation Room · civilian archive · every page carries this caveat.</footer>
+<ul>
+<li><strong>Optical</strong> — NASA GIBS HLS (~30 m dated) and EOX Sentinel-2 cloudless mosaic (annual, not a date). Sentinel-2 native 10 m cannot census pickups vs technicals.</li>
+<li><strong>SAR</strong> — Sentinel-1 RTC browse for cloudy gaps. Speckle is not wreckage. DET does not run on S1.</li>
+<li><strong>Thermal</strong> — NASA FIRMS VIIRS 375 m. Agricultural burning, flares, and kilns are common false combat cues. A FIRMS gap is a failure, not a silent zero.</li>
+<li><strong>Aviation</strong> — Public ADS-B (adsb.lol / adsb.fi / OpenSky). Coverage in Darfur and desert corridors is sparse. Absence of a track ≠ absence of a flight. Never infer cargo.</li>
+<li><strong>Maritime</strong> — AIS type is typical-for-hull. Lane markers are schematic corridor animation (NOT LIVE AIS).</li>
+<li><strong>Corroboration</strong> — Conflict cites are a shipped citation file, not live ACLED/UCDP ids. News pins are named-place centroids.</li>
+<li><strong>Review</strong> — Nothing is “confirmed” without a human click. Auto detections default to confidence 1–2. Party labels write an audit row with reason.</li>
+<li><strong>Language</strong> — Observation / identification / assessment / judgment stay distinct. Forbidden: targeting, fire control, strike planning, kill-chain language.</li>
+</ul>
+<p>Full methods live at <code>/methods</code>. Ethics / no-targeting policy at <code>/ethics</code>. Analyst SOP at <code>/sop</code>.</p>
+<footer>Abu Hureirah Situation Room · civilian archive · every page carries this caveat · DOCS ONLY</footer>
 </body></html>`;
 }
 function filesForExport(flights, firms, log) {
@@ -7597,6 +7631,178 @@ function exportCsv() {
 function exportBriefing(flights, firms) {
 	const file = filesForExport(flights, firms, useAppStore.getState().changeLog).briefing;
 	saveExport(file);
+}
+var DB_NAME = "ahsr-evidence-bundles";
+var STORE = "bundles";
+function openDb() {
+	return new Promise((resolve, reject) => {
+		const req = indexedDB.open(DB_NAME, 1);
+		req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: "id" });
+		req.onsuccess = () => resolve(req.result);
+		req.onerror = () => reject(req.error ?? /* @__PURE__ */ new Error("Evidence storage unavailable"));
+	});
+}
+async function saveEvidenceBundle(bundle) {
+	const db = await openDb();
+	try {
+		await new Promise((resolve, reject) => {
+			const tx = db.transaction(STORE, "readwrite");
+			tx.objectStore(STORE).put(bundle);
+			tx.oncomplete = () => resolve();
+			tx.onerror = () => reject(tx.error ?? /* @__PURE__ */ new Error("Could not save evidence bundle"));
+		});
+	} finally {
+		db.close();
+	}
+}
+function scriptHash(seed) {
+	let h = 2166136261;
+	for (let i = 0; i < seed.length; i++) {
+		h ^= seed.charCodeAt(i);
+		h = Math.imul(h, 16777619);
+	}
+	return `ahsr-${(h >>> 0).toString(16)}`;
+}
+function geojsonForPoint(lat, lon, props) {
+	return JSON.stringify({
+		type: "FeatureCollection",
+		features: [{
+			type: "Feature",
+			geometry: {
+				type: "Point",
+				coordinates: [lon, lat]
+			},
+			properties: props
+		}]
+	}, null, 2);
+}
+async function captureMapPng() {
+	const map = window.__ahsrMap;
+	try {
+		return map?.getCanvas().toDataURL("image/png");
+	} catch {
+		return;
+	}
+}
+async function archiveSiteScene(opts) {
+	const site = SITES.find((s) => s.id === opts.siteId);
+	if (!site) throw new Error("Unknown site");
+	const obs = OBSERVATIONS.filter((o) => o.siteId === opts.siteId);
+	const bbox = padBbox(site.lat, site.lon, .12);
+	const sceneIds = [
+		...obs.map((o) => o.sceneId),
+		`GIBS-HLS-${opts.date}`,
+		opts.compareDate ? `GIBS-HLS-${opts.compareDate}` : null
+	].filter(Boolean);
+	const shot = await captureMapPng();
+	const cites = CITATIONS.slice(0, 4);
+	const nearbyFirms = (opts.firms ?? []).filter((f) => Math.hypot(f.lat - site.lat, (f.lon - site.lon) * Math.cos(site.lat * Math.PI / 180)) < .35);
+	const confidence = Math.min(5, Math.max(1, site.confidence));
+	const bundle = {
+		id: `ev-site-${site.id}-${Date.now()}`,
+		createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+		kind: "site-scene",
+		title: `${site.name} · scene archive ${opts.date}`,
+		lat: site.lat,
+		lon: site.lon,
+		siteId: site.id,
+		sceneIds,
+		acquisitionTimes: [opts.date, ...opts.compareDate ? [opts.compareDate] : []],
+		bbox,
+		processing: {
+			sensor: "NASA GIBS HLS / Sentinel-2 MSI browse",
+			params: `date=${opts.date};compare=${opts.compareDate ?? "none"};bbox=${bbox.west},${bbox.south},${bbox.east},${bbox.north}`,
+			scriptHash: scriptHash(`${site.id}|${opts.date}|${opts.compareDate ?? ""}`)
+		},
+		firmsSubset: nearbyFirms.slice(0, 40),
+		flightJson: null,
+		citations: cites,
+		geojson: geojsonForPoint(site.lat, site.lon, {
+			layer: "evidence-site",
+			site_id: site.id,
+			name: site.name,
+			party: useAppStore.getState().partyOverrides[site.id]?.party ?? site.party,
+			date: opts.date,
+			caveat: "Documentation archive — not targeting"
+		}),
+		notes: opts.notes?.trim() || site.notes,
+		confidence,
+		screenshotDataUrl: shot,
+		caveats: CAVEAT
+	};
+	await saveEvidenceBundle(bundle);
+	useAppStore.getState().pushAudit("evidence-archive", bundle.id, `site ${site.name} · ${opts.date}`);
+	downloadEvidencePack(bundle);
+	return bundle;
+}
+async function archiveFlight(opts) {
+	const f = opts.flight;
+	const bbox = padBbox(f.lat, f.lon, .25);
+	const shot = await captureMapPng();
+	const day = f.lastSeen.slice(0, 10);
+	const bundle = {
+		id: `ev-flight-${f.id}-${Date.now()}`,
+		createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+		kind: "flight",
+		title: `Flight ${f.typeCode || f.hex} · ${f.reg || "no-reg"}`,
+		lat: f.lat,
+		lon: f.lon,
+		flightId: f.id,
+		sceneIds: [`ADS-B-${f.hex}-${day}`],
+		acquisitionTimes: [f.firstSeen, f.lastSeen],
+		bbox,
+		processing: {
+			sensor: "Public ADS-B (adsb.lol / adsb.fi / OpenSky)",
+			params: `hex=${f.hex};category=${f.category};nearest=${f.nearestAirfield}`,
+			scriptHash: scriptHash(`${f.hex}|${f.lastSeen}`)
+		},
+		firmsSubset: (opts.firms ?? []).filter((t) => Math.hypot(t.lat - f.lat, (t.lon - f.lon) * Math.cos(f.lat * Math.PI / 180)) < .5).slice(0, 20),
+		flightJson: f,
+		citations: CITATIONS.slice(0, 2),
+		geojson: geojsonForPoint(f.lat, f.lon, {
+			layer: "evidence-flight",
+			hex: f.hex,
+			reg: f.reg,
+			type: f.typeCode,
+			category: f.category,
+			note: "Category is typical-for-airframe, never cargo contents"
+		}),
+		notes: opts.notes?.trim() || f.notes || "Logged public ADS-B contact. Landing not confirmed unless stated. Cargo unknown.",
+		confidence: f.confidence,
+		screenshotDataUrl: shot,
+		caveats: CAVEAT
+	};
+	await saveEvidenceBundle(bundle);
+	useAppStore.getState().pushAudit("evidence-archive", bundle.id, `flight ${f.hex}`);
+	downloadEvidencePack(bundle);
+	return bundle;
+}
+function downloadEvidencePack(bundle) {
+	const meta = {
+		...bundle,
+		screenshotDataUrl: bundle.screenshotDataUrl ? "[embedded png omitted in JSON; see companion .html]" : void 0
+	};
+	downloadBlob(`${bundle.id}.json`, "application/json", JSON.stringify(meta, null, 2));
+	const browse = snapshotUrl(bundle.acquisitionTimes[0]?.slice(0, 10) ?? (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), bundle.bbox, "HLS_S30_Nadir_BRDF_Adjusted_Reflectance");
+	const html = `<!doctype html><html><head><meta charset="utf-8"><title>${bundle.title}</title>
+<style>body{font:14px/1.5 system-ui;max-width:720px;margin:24px auto;background:#111;color:#ece8e1}
+pre{white-space:pre-wrap;font-size:11px;opacity:.85}.caveat{border:1px solid #5a4030;padding:12px;margin:16px 0;font-size:12px}
+img{max-width:100%;border:1px solid #333}</style></head><body>
+<p style="letter-spacing:.14em;text-transform:uppercase;font-size:11px;opacity:.6">Evidence bundle · docs only · no targeting</p>
+<h1>${bundle.title}</h1>
+<p>${bundle.createdAt} · confidence ${bundle.confidence}/5 · ${bundle.kind}</p>
+<div class="caveat">${bundle.caveats.replace(/</g, "&lt;")}</div>
+<p>${bundle.notes.replace(/</g, "&lt;")}</p>
+<p>Scenes: ${bundle.sceneIds.join(", ")}</p>
+<p>Hash: ${bundle.processing.scriptHash}</p>
+<p><a href="${browse}" target="_blank" rel="noreferrer">Open GIBS browse for acquisition window</a></p>
+${bundle.screenshotDataUrl ? `<h2>Map screenshot</h2><img src="${bundle.screenshotDataUrl}" alt="Map archive"/>` : ""}
+<h2>GeoJSON</h2><pre>${bundle.geojson.replace(/</g, "&lt;")}</pre>
+<h2>Flight JSON</h2><pre>${bundle.flightJson ? JSON.stringify(bundle.flightJson, null, 2).replace(/</g, "&lt;") : "none"}</pre>
+<h2>FIRMS subset (${bundle.firmsSubset.length})</h2>
+<pre>${JSON.stringify(bundle.firmsSubset, null, 2).replace(/</g, "&lt;")}</pre>
+</body></html>`;
+	downloadBlob(`${bundle.id}.html`, "text/html", html);
 }
 function catType(cat) {
 	if (cat === "strike-damage") return "damage";
@@ -9168,6 +9374,145 @@ function LeftRail(props) {
 					className: "h-10 w-full rounded-lg border border-border bg-raised pl-8 pr-3 text-sm text-fg placeholder:text-subtle"
 				})]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "mb-2 text-xs font-medium uppercase tracking-wider text-subtle",
+					children: "Layers"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mb-2 text-[11px] leading-snug text-subtle",
+					children: "Choose what to draw."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "space-y-0.5",
+					children: [
+						[
+							"sites",
+							"Sites",
+							Shield
+						],
+						[
+							"boxes",
+							"Watch boxes",
+							Eye
+						],
+						[
+							"control",
+							"Control areas",
+							Shield
+						],
+						[
+							"vista",
+							"Vista control map",
+							Shield
+						],
+						[
+							"reports",
+							"OSINT reports",
+							FileText
+						],
+						[
+							"news",
+							"News pins",
+							Search
+						],
+						[
+							"ai",
+							"AI brief pins",
+							FileText
+						],
+						[
+							"gdelt",
+							"GDELT events",
+							TriangleAlert
+						],
+						[
+							"osm",
+							"OSM / airfields",
+							Shield
+						],
+						[
+							"vessels",
+							"Vessels (AIS)",
+							Ship
+						],
+						[
+							"lanes",
+							"Lane markers · NOT LIVE AIS",
+							Ship
+						],
+						[
+							"conflict",
+							"Open conflict cites",
+							FileText
+						],
+						[
+							"corridors",
+							"Reported corridors",
+							Eye
+						],
+						[
+							"rsfWatch",
+							"RSF watchlist",
+							Shield
+						],
+						[
+							"firms",
+							"FIRMS thermal",
+							Flame
+						],
+						[
+							"flights",
+							"Flights",
+							Plane
+						],
+						[
+							"thermalRaster",
+							"GIBS thermal raster",
+							Flame
+						],
+						[
+							"grid",
+							"1° grid",
+							Satellite
+						],
+						[
+							"quakes",
+							"USGS quakes",
+							Flame
+						],
+						[
+							"sats",
+							"ISS / sats",
+							Satellite
+						],
+						[
+							"eonet",
+							"EONET",
+							TriangleAlert
+						],
+						[
+							"launches",
+							"Launches",
+							Plane
+						],
+						[
+							"freight",
+							"Freight smear · not a count",
+							Ship
+						]
+					].map(([k, label, Icon]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => toggleLayer(k),
+						className: "flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-raised",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: cn("size-2 rounded-full", layers[k] ? "bg-accent" : "bg-border") }),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { className: "size-3.5 text-muted" }),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: label })
+						]
+					}, k))
+				})
+			] }),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 				className: "mb-2 text-xs font-medium uppercase tracking-wider text-subtle",
 				children: "Party"
@@ -9246,108 +9591,6 @@ function LeftRail(props) {
 					children: "No live ADS-B this cycle. Coverage gaps are normal. Absence of a track is not absence of a flight."
 				}) : null]
 			})] }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-				className: "mb-2 text-xs font-medium uppercase tracking-wider text-subtle",
-				children: "Layers"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "space-y-0.5",
-				children: [
-					[
-						"sites",
-						"Sites",
-						Shield
-					],
-					[
-						"boxes",
-						"Watch boxes",
-						Eye
-					],
-					[
-						"control",
-						"Control areas",
-						Shield
-					],
-					[
-						"vista",
-						"Vista control map",
-						Shield
-					],
-					[
-						"reports",
-						"OSINT reports",
-						FileText
-					],
-					[
-						"news",
-						"News pins",
-						Search
-					],
-					[
-						"ai",
-						"AI brief pins",
-						FileText
-					],
-					[
-						"gdelt",
-						"GDELT events",
-						TriangleAlert
-					],
-					[
-						"osm",
-						"OSM / airfields",
-						Shield
-					],
-					[
-						"vessels",
-						"Vessels (AIS)",
-						Ship
-					],
-					[
-						"lanes",
-						"Lane markers · NOT LIVE AIS",
-						Ship
-					],
-					[
-						"conflict",
-						"Open conflict cites",
-						FileText
-					],
-					[
-						"corridors",
-						"Reported corridors",
-						Eye
-					],
-					[
-						"rsfWatch",
-						"RSF watchlist",
-						Shield
-					],
-					[
-						"firms",
-						"FIRMS thermal",
-						Flame
-					],
-					[
-						"flights",
-						"Flights",
-						Plane
-					],
-					[
-						"thermalRaster",
-						"GIBS thermal raster",
-						Flame
-					]
-				].map(([k, label, Icon]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-					type: "button",
-					onClick: () => toggleLayer(k),
-					className: "flex h-10 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-raised",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: cn("size-2 rounded-full", layers[k] ? "bg-accent" : "bg-border") }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { className: "size-3.5 text-muted" }),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: label })
-					]
-				}, k))
-			})] }),
 			overlay ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 					className: "mb-2 text-xs font-medium uppercase tracking-wider text-subtle",
@@ -9365,7 +9608,7 @@ function LeftRail(props) {
 						type: "checkbox",
 						checked: swipeOn,
 						onChange: (e) => setSwipeOn(e.target.checked)
-					}), "Before / after on selected site"]
+					}), "Before / after on map + selected site"]
 				}),
 				swipeOn ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 					type: "date",
@@ -9435,6 +9678,26 @@ function LeftRail(props) {
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 							size: "sm",
+							variant: "outline",
+							type: "button",
+							className: "w-full",
+							onClick: () => {
+								const map = window.__ahsrMap;
+								if (!map) return;
+								const b = map.getBounds();
+								setBoxForm({
+									...boxForm,
+									west: b.getWest().toFixed(4),
+									south: b.getSouth().toFixed(4),
+									east: b.getEast().toFixed(4),
+									north: b.getNorth().toFixed(4),
+									name: boxForm.name || "Map viewport"
+								});
+							},
+							children: "Use current map frame"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							size: "sm",
 							className: "w-full",
 							type: "submit",
 							children: "Add box"
@@ -9487,8 +9750,11 @@ function LeftRail(props) {
 						variant: "secondary",
 						size: "sm",
 						className: "w-full",
-						onClick: () => exportBriefing(flights, firms),
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, { className: "size-3.5" }), " PDF briefing"]
+						onClick: () => {
+							if (props.onExport) props.onExport();
+							else exportBriefing(flights, firms);
+						},
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, { className: "size-3.5" }), " Export / briefing"]
 					})
 				]
 			})
@@ -9726,6 +9992,7 @@ function QueueOrLog({ alerts, reviews, reviewFilter, setReviewFilter, setSelecte
 				["fuae", "FUAE"],
 				["rsf", "RSF"],
 				["log", "Log"],
+				["audit", "Audit"],
 				["queue", "Flags"],
 				["brief", "Brief"],
 				["reports", "Reports"],
@@ -9756,7 +10023,7 @@ function QueueOrLog({ alerts, reviews, reviewFilter, setReviewFilter, setSelecte
 					}) : null
 				]
 			}, id))
-		}), rightTab === "log" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChangeLogList, {}) : rightTab === "news" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NewsPanel, {
+		}), rightTab === "log" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChangeLogList, {}) : rightTab === "audit" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AuditLogPanel, {}) : rightTab === "news" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NewsPanel, {
 			data: news,
 			loading: newsLoading
 		}) : rightTab === "brief" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BriefPanel, {
@@ -10043,6 +10310,53 @@ function ChangeLogList() {
 		]
 	});
 }
+function AuditLogPanel() {
+	const audit = useAppStore((s) => s.audit);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex h-full flex-col overflow-y-auto p-3",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-xs font-medium uppercase tracking-wider text-subtle",
+				children: "Audit log"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 text-[11px] leading-snug text-subtle",
+				children: "Party labels, review clicks, watch-box edits, and evidence archives. Who / when / why. Local analyst id until desk sign-in."
+			}),
+			audit.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 text-sm text-muted",
+				children: "No audit rows yet. Change a party label or confirm a flag to open the trail."
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 space-y-2",
+				children: audit.map((a) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "rounded-xl border border-border bg-raised/40 px-3 py-2",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "font-mono text-[10px] tabular-nums text-subtle",
+							children: [
+								formatUtc(a.at),
+								" · ",
+								a.actor
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-0.5 text-sm font-medium",
+							children: a.action
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-xs text-muted",
+							children: [
+								a.target,
+								" — ",
+								a.reason
+							]
+						})
+					]
+				}, a.id))
+			})
+		]
+	});
+}
 function SiteDetail({ site, party, obs, flights, onClose, overrideParty }) {
 	const date = useAppStore((s) => s.date);
 	const compareDate = useAppStore((s) => s.compareDate);
@@ -10052,6 +10366,8 @@ function SiteDetail({ site, party, obs, flights, onClose, overrideParty }) {
 	const bbox = padBbox(site.lat, site.lon, .08);
 	const [reason, setReason] = (0, import_react.useState)("");
 	const [copied, setCopied] = (0, import_react.useState)(false);
+	const [archiving, setArchiving] = (0, import_react.useState)(false);
+	const [archiveNote, setArchiveNote] = (0, import_react.useState)(null);
 	const coords = `${site.lat.toFixed(5)}, ${site.lon.toFixed(5)}`;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "flex h-full flex-col overflow-y-auto p-4",
@@ -10110,17 +10426,44 @@ function SiteDetail({ site, party, obs, flights, onClose, overrideParty }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-3 grid grid-cols-2 gap-1.5",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
-					size: "sm",
-					onClick: () => requestYardsZoom(),
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Focus, { className: "size-3.5" }), " Zoom to yards"]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					size: "sm",
-					variant: "secondary",
-					onClick: () => setSwipeOn(!swipeOn),
-					children: swipeOn ? "Hide compare" : "Before / after"
-				})]
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+						size: "sm",
+						onClick: () => requestYardsZoom(),
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Focus, { className: "size-3.5" }), " Zoom to yards"]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+						size: "sm",
+						variant: "secondary",
+						onClick: () => setSwipeOn(!swipeOn),
+						children: swipeOn ? "Hide compare" : "Before / after"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+						size: "sm",
+						variant: "outline",
+						className: "col-span-2",
+						disabled: archiving,
+						onClick: () => {
+							setArchiving(true);
+							setArchiveNote(null);
+							archiveSiteScene({
+								siteId: site.id,
+								date,
+								compareDate
+							}).then((b) => setArchiveNote(`Archived ${b.id} · JSON + HTML downloaded`)).catch((e) => setArchiveNote(e instanceof Error ? e.message : "Archive failed")).finally(() => setArchiving(false));
+						},
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, { className: "size-3.5" }),
+							" ",
+							archiving ? "Archiving…" : "Screenshot + archive"
+						]
+					})
+				]
 			}),
+			archiveNote ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 text-[11px] text-accent",
+				children: archiveNote
+			}) : null,
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "mt-3",
 				children: swipeOn ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SwipeCompare, {
@@ -10245,8 +10588,8 @@ function SiteDetail({ site, party, obs, flights, onClose, overrideParty }) {
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 				className: "mt-2 space-y-1 text-xs",
 				children: flights.slice(0, 5).map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-					className: "rounded-lg border border-border px-2 py-1.5",
-					children: [
+					className: "flex items-center justify-between gap-2 rounded-lg border border-border px-2 py-1.5",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
 						f.typeCode,
 						" · ",
 						f.hex,
@@ -10254,7 +10597,14 @@ function SiteDetail({ site, party, obs, flights, onClose, overrideParty }) {
 						f.category,
 						" · ",
 						f.operator || "unknown"
-					]
+					] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "shrink-0 text-[10px] uppercase tracking-wide text-accent hover:underline",
+						onClick: () => {
+							archiveFlight({ flight: f }).catch(() => void 0);
+						},
+						children: "Archive"
+					})]
 				}, f.id))
 			})] }) : null,
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
@@ -10321,7 +10671,7 @@ function SwipeCompare({ date, compareDate, lat, lon, name }) {
 		]
 	});
 }
-function zulu(now) {
+function zulu$1(now) {
 	return now.toISOString().slice(11, 19) + "Z";
 }
 function SitroomFx() {
@@ -10504,7 +10854,7 @@ function ClockChip() {
 	}, []);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 		className: "font-mono text-[11px] tabular-nums tracking-wider text-accent",
-		children: now ? zulu(now) : "--:--:--Z"
+		children: now ? zulu$1(now) : "--:--:--Z"
 	});
 }
 function ClassificationBar() {
@@ -12372,9 +12722,15 @@ function FeedHealth({ firmsMeta, firmsN, firmsWindow, vessels, vesselsNote, flig
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "hud-panel pointer-events-auto mb-2 w-[min(16rem,calc(100vw-1.5rem))] p-2 text-[10px] leading-snug",
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "font-mono tracking-wider text-accent",
-				children: "REC · PUBLIC FEEDS"
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex items-center justify-between gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-mono tracking-wider text-accent",
+					children: "REC · PUBLIC FEEDS"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "rounded-full border border-rsf/70 bg-rsf/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-fg",
+					children: "DOCS ONLY"
+				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "mt-1 flex gap-1",
@@ -12399,6 +12755,288 @@ function FeedHealth({ firmsMeta, firmsN, firmsWindow, vessels, vesselsNote, flig
 				}) : null]
 			}, r.id))
 		]
+	});
+}
+function zulu(iso) {
+	if (!iso) return "—";
+	const d = new Date(iso);
+	if (Number.isNaN(d.getTime())) return "—";
+	return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}Z`;
+}
+function feedChip(label, meta, okWhen) {
+	const t = zulu(meta?.fetchedAt);
+	if (!meta) return `${label} gap · ${t}`;
+	if (meta.status === "error" || meta.status === "empty" || meta.status === "gap" || !okWhen) return `${label} gap · ${t}`;
+	if (meta.status === "stale") return `${label} stale · ${t}`;
+	return `${label} ok · ${t}`;
+}
+/**
+* Bottom/status strip: archive counts + public-feed health + DOCS ONLY badge.
+* Matches the civilian documentation chrome (not a targeting HUD).
+*/
+function StatusStrip({ pins, maritime, records, firmsMeta, firmsN, flightsMeta, flightsLive, vesselsMeta, vesselsLive, osmMeta, osmN, className }) {
+	const chips = [
+		feedChip("FIRMS", firmsMeta, firmsN > 0),
+		feedChip("ADS-B", flightsMeta, flightsLive > 0),
+		feedChip("AIS", vesselsMeta, vesselsLive > 0),
+		feedChip("OSM", osmMeta, osmN > 0)
+	];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: cn("hud-panel flex w-full flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-[11px] leading-none", className),
+		role: "status",
+		"aria-label": "Archive counts and public feed health",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "font-mono tabular-nums text-muted",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [pins, " pins"] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "mx-1.5 text-subtle",
+						children: "·"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [maritime, " maritime"] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "mx-1.5 text-subtle",
+						children: "·"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [records, " records"] })
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 font-mono tabular-nums text-thermal",
+				children: chips.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: c }, c))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "shrink-0 rounded-full border border-rsf/70 bg-rsf/25 px-2.5 py-1 font-mono text-[10px] tracking-wider text-fg",
+				title: "Civilian documentation archive. No targeting, fire control, or strike planning.",
+				children: "DOCS ONLY"
+			})
+		]
+	});
+}
+/**
+* Map-level before/after swipe using NASA GIBS browse for the current viewport.
+* Complements the site-panel SwipeCompare; does not invent pixels when GIBS is cloudy.
+*/
+function MapSwipeOverlay() {
+	const swipeOn = useAppStore((s) => s.swipeOn);
+	const date = useAppStore((s) => s.date);
+	const compareDate = useAppStore((s) => s.compareDate);
+	const imagery = useAppStore((s) => s.imagery);
+	const [pct, setPct] = (0, import_react.useState)(50);
+	const [bbox, setBbox] = (0, import_react.useState)(null);
+	(0, import_react.useEffect)(() => {
+		if (!swipeOn) return;
+		const sync = () => {
+			const map = window.__ahsrMap;
+			if (!map) return;
+			const b = map.getBounds();
+			setBbox({
+				west: b.getWest(),
+				south: b.getSouth(),
+				east: b.getEast(),
+				north: b.getNorth()
+			});
+		};
+		sync();
+		const map = window.__ahsrMap;
+		if (!map) return;
+		map.on("moveend", sync);
+		return () => map.off("moveend", sync);
+	}, [
+		swipeOn,
+		date,
+		compareDate
+	]);
+	if (!swipeOn || !bbox) return null;
+	const layer = imagery === "s2" || imagery === "s2cloudless" ? "HLS_S30_Nadir_BRDF_Adjusted_Reflectance" : "VIIRS_NOAA20_CorrectedReflectance_TrueColor";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "pointer-events-none absolute inset-x-0 bottom-28 top-28 z-30 flex items-center justify-center px-4 md:inset-x-[22%] md:bottom-32 md:top-36",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "pointer-events-auto hud-panel w-full max-w-xl overflow-hidden",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex items-center justify-between px-3 py-1.5 text-[10px] uppercase tracking-wider text-subtle",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: ["Map compare · ", compareDate] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: date })]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "relative aspect-[16/9] bg-bg",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: snapshotUrl(compareDate, bbox, layer, 900),
+							alt: "",
+							className: "absolute inset-0 h-full w-full object-cover"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: snapshotUrl(date, bbox, layer, 900),
+							alt: "",
+							className: "absolute inset-0 h-full w-full object-cover",
+							style: { clipPath: `inset(0 0 0 ${pct}%)` }
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "pointer-events-none absolute inset-y-0 w-px bg-accent",
+							style: { left: `${pct}%` }
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "range",
+							min: 0,
+							max: 100,
+							value: pct,
+							onChange: (e) => setPct(Number(e.target.value)),
+							className: "absolute inset-x-3 bottom-2",
+							"aria-label": "Swipe before and after on map viewport"
+						})
+					]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "px-3 py-1.5 text-[10px] leading-snug text-subtle",
+					children: "GIBS browse for the current map frame. Cloudy granules stay empty — do not invent vehicles or damage."
+				})
+			]
+		})
+	});
+}
+function ExportSheet({ open, onClose, flights, firms }) {
+	const log = useAppStore((s) => s.changeLog);
+	const files = (0, import_react.useMemo)(() => filesForExport(flights, firms, log), [
+		flights,
+		firms,
+		log
+	]);
+	const [kind, setKind] = (0, import_react.useState)("geojson");
+	const [status, setStatus] = (0, import_react.useState)(null);
+	const [printOpen, setPrintOpen] = (0, import_react.useState)(false);
+	if (!open) return null;
+	const file = files[kind];
+	const blobUrl = URL.createObjectURL(new Blob([file.body], { type: file.mime }));
+	async function runSave() {
+		const r = await saveExport(file);
+		setStatus(r === "shared" ? "Share sheet opened" : r === "downloaded" ? "Save started — if nothing appeared, tap the link below or Copy" : "Ready");
+	}
+	async function runCopy() {
+		const ok = await copyText(file.body);
+		setStatus(ok ? "Copied to clipboard" : "Copy blocked — select the preview and copy");
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "absolute inset-0 z-50 flex items-end justify-center bg-bg/70 p-3 sm:items-center",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "hud-panel flex max-h-[88dvh] w-full max-w-lg flex-col overflow-hidden",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex items-center justify-between border-b border-border px-4 py-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "font-mono text-[10px] tracking-[0.18em] text-subtle",
+						children: "EXPORT"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "font-medium",
+						children: "Take the archive with you"
+					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "flex size-10 items-center justify-center text-muted hover:text-fg",
+						onClick: onClose,
+						"aria-label": "Close export",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { className: "size-4" })
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "flex gap-1 px-3 pt-3",
+					children: [
+						["geojson", "GeoJSON"],
+						["csv", "CSV"],
+						["briefing", "Briefing"]
+					].map(([id, label]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => {
+							setKind(id);
+							setStatus(null);
+						},
+						className: kind === id ? "h-9 rounded-lg bg-accent px-3 text-xs text-accent-fg" : "h-9 rounded-lg px-3 text-xs text-muted hover:bg-raised",
+						children: label
+					}, id))
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "px-4 pt-2 text-[11px] leading-snug text-subtle",
+					children: kind === "geojson" ? "Sites, control polygons, city markers and watch boxes. Opens in QGIS / geojson.io." : kind === "csv" ? "Sites, alerts, control cities and the first 400 log rows. Spreadsheet-ready." : "Printable HTML briefing (File → Print → PDF) with caveat, methods appendix, control picture, unreviewed queue and recent log."
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("pre", {
+					className: "mx-3 mt-2 max-h-40 overflow-auto rounded-lg border border-border bg-raised p-2 font-mono text-[10px] leading-relaxed text-muted",
+					children: [file.body.slice(0, 1800), file.body.length > 1800 ? "\n…" : ""]
+				}),
+				status ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "flex items-center gap-1.5 px-4 pt-2 text-xs text-civilian",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Check, { className: "size-3.5" }),
+						" ",
+						status
+					]
+				}) : null,
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "grid grid-cols-2 gap-1.5 p-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+							size: "sm",
+							onClick: () => void runSave(),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Share2, { className: "size-3.5" }), " Save / share"]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+							size: "sm",
+							variant: "secondary",
+							onClick: () => void runCopy(),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Copy, { className: "size-3.5" }), " Copy"]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+							href: blobUrl,
+							download: file.filename,
+							className: "inline-flex h-8 items-center justify-center gap-2 rounded-md border border-border bg-raised px-3 text-xs font-medium text-fg hover:bg-surface",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Download, { className: "size-3.5" }),
+								" ",
+								file.filename
+							]
+						}),
+						kind === "briefing" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+							size: "sm",
+							variant: "secondary",
+							onClick: () => setPrintOpen(true),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Printer, { className: "size-3.5" }), " View & print"]
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+							size: "sm",
+							variant: "outline",
+							onClick: onClose,
+							children: "Done"
+						})
+					]
+				})
+			]
+		}), printOpen ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "absolute inset-0 z-10 flex flex-col bg-paper text-bg",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex items-center gap-2 border-b border-border/40 bg-bg px-3 py-2 text-fg print:hidden",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FileText, { className: "size-4" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "flex-1 text-sm",
+						children: "Briefing preview"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Button, {
+						size: "sm",
+						onClick: () => window.print(),
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Printer, { className: "size-3.5" }), " Print"]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "size-9 text-muted",
+						onClick: () => setPrintOpen(false),
+						"aria-label": "Close preview",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { className: "mx-auto size-4" })
+					})
+				]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("iframe", {
+				title: "Briefing",
+				srcDoc: file.body,
+				className: "min-h-0 flex-1 bg-paper"
+			})]
+		}) : null]
 	});
 }
 /** One public Sentinel-1 RTC scene over Sudan. Morphology only — not a vehicle layer. */
@@ -12562,7 +13200,7 @@ function DateStrip({ date, setDate, compareDate, setCompareDate, dated, swipeOn,
 					type: "checkbox",
 					checked: swipeOn,
 					onChange: (e) => setSwipeOn(e.target.checked)
-				}), "Compare"]
+				}), "Map compare"]
 			}),
 			swipeOn ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 				type: "date",
@@ -12579,13 +13217,13 @@ function DateStrip({ date, setDate, compareDate, setCompareDate, dated, swipeOn,
 	});
 }
 function Workspace() {
-	const [tab, setTab] = (0, import_react.useState)("news");
+	const [tab, setTab] = (0, import_react.useState)("layers");
 	const [live, setLive] = (0, import_react.useState)(null);
 	const [liveError, setLiveError] = (0, import_react.useState)(null);
 	const [note, setNote] = (0, import_react.useState)("");
 	const [boxOpen, setBoxOpen] = (0, import_react.useState)(false);
 	const [searchOpen, setSearchOpen] = (0, import_react.useState)(false);
-	const [leftOpen, setLeftOpen] = (0, import_react.useState)(false);
+	const [leftOpen, setLeftOpen] = (0, import_react.useState)(true);
 	const [sweeping, setSweeping] = (0, import_react.useState)(false);
 	const [sweepNote, setSweepNote] = (0, import_react.useState)(null);
 	const [brief, setBrief] = (0, import_react.useState)(null);
@@ -12608,6 +13246,7 @@ function Workspace() {
 	const [placeFor, setPlaceFor] = (0, import_react.useState)("");
 	const [landed, setLanded] = (0, import_react.useState)(null);
 	const [controlOpen, setControlOpen] = (0, import_react.useState)(false);
+	const [exportOpen, setExportOpen] = (0, import_react.useState)(false);
 	const placeReq = (0, import_react.useRef)(0);
 	const freightHits = useFreightState((s) => s.hits);
 	const customReports = useAppStore((s) => s.customReports);
@@ -13405,7 +14044,8 @@ function Workspace() {
 		removeBox,
 		hideDefaultBox,
 		flights,
-		firms
+		firms,
+		onExport: () => setExportOpen(true)
 	};
 	const rightProps = {
 		alerts,
@@ -13992,14 +14632,21 @@ function Workspace() {
 				onClick: () => openDesk("queue"),
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PanelRight, { className: "size-3.5" }), "Flags · briefs · logs"]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MapSwipeOverlay, {}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExportSheet, {
+				open: exportOpen,
+				onClose: () => setExportOpen(false),
+				flights,
+				firms
+			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-3 md:block",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "pointer-events-auto mx-auto mb-2 flex max-w-5xl justify-center",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LookTray, {})
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "pointer-events-auto mx-auto max-w-5xl",
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateStrip, {
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "pointer-events-auto mx-auto max-w-5xl space-y-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateStrip, {
 						date,
 						setDate,
 						compareDate,
@@ -14008,7 +14655,19 @@ function Workspace() {
 						swipeOn,
 						setSwipeOn,
 						onPickDate: pickDate
-					})
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StatusStrip, {
+						pins: SITES.length,
+						maritime: (live?.vessels ?? []).filter((v) => v.kind === "ais" || v.kind === "lane").length,
+						records: (live?.feeds.length ?? 0) + (newsFeed?.items.length ?? 0) + ALERTS.length + FLIGHTS.length,
+						firmsMeta,
+						firmsN: firms.length,
+						flightsMeta: live?.flightsMeta ?? null,
+						flightsLive: liveFlightCount,
+						vesselsMeta: live?.vesselsMeta ?? null,
+						vesselsLive: (live?.vessels ?? []).filter((v) => v.kind === "ais" && v.live).length,
+						osmMeta: live?.osmMeta ?? null,
+						osmN: osm.length
+					})]
 				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {

@@ -4,13 +4,13 @@ import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react
 import { r as createServerFn } from "./ssr.mjs";
 import { a as FACTION_META, l as reportsToLog, o as SEED_REPORTS } from "./osint-wXO3XaAY.mjs";
 import { i as signOut, r as signIn, t as authClient } from "./client-B40BzJxt.mjs";
-import { t as authMiddleware } from "./middleware-rxgVnsQw.mjs";
+import { t as authMiddleware } from "./middleware-D72XNC2L.mjs";
 import { g as seedZoneEdits, h as partyToFaction, r as CONTROL_CITIES } from "./control-BsiNbWqm.mjs";
-import { a as hasGateSessionMarker, t as GROK_PROVIDERS } from "./server-CqEGP_J5.mjs";
+import { a as hasGateSessionMarker, t as GROK_PROVIDERS } from "./server-CDJrkl2H.mjs";
 import { i as daysAgo } from "./utils-D5izKJMm.mjs";
 import { _ as gdeltFamily, f as REGIONAL_EVENTS, g as createSsrRpc, h as WATCH_BOXES, l as GDELT_ARCHIVE, n as ALERTS, p as SITES, r as ARCHIVE_EVENTS, u as OBSERVATIONS } from "./warroom-data-iyrVJsgQ.mjs";
 import { n as create, t as persist } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/control-desk-BefuxGhT.js
+//#region node_modules/.nitro/vite/services/ssr/assets/control-desk-B19UeTXD.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function siteName(id) {
@@ -416,6 +416,34 @@ function parseWeights(raw) {
 		return null;
 	}
 }
+var LAYERS_OFF = {
+	sites: false,
+	firms: false,
+	flights: false,
+	boxes: false,
+	gibs: false,
+	thermalRaster: false,
+	control: false,
+	news: false,
+	reports: false,
+	ai: false,
+	gdelt: false,
+	osm: false,
+	vessels: false,
+	corridors: false,
+	rsfWatch: false,
+	vista: false,
+	quakes: false,
+	sats: false,
+	eonet: false,
+	launches: false,
+	freight: false,
+	grid: false,
+	lanes: false,
+	conflict: false
+};
+/** Bump when the quiet-map default should replace a saved "everything on" layout once. */
+var LAYER_EPOCH = 3;
 function stamp() {
 	return (/* @__PURE__ */ new Date()).toISOString();
 }
@@ -444,32 +472,8 @@ var useAppStore = create()(persist((set) => ({
 	partyFilter: "all",
 	kindFilter: "all",
 	reviewFilter: "all",
-	layers: {
-		sites: true,
-		firms: true,
-		flights: true,
-		boxes: true,
-		gibs: true,
-		thermalRaster: false,
-		control: true,
-		news: true,
-		reports: true,
-		ai: true,
-		gdelt: true,
-		osm: false,
-		vessels: true,
-		corridors: true,
-		rsfWatch: true,
-		vista: true,
-		quakes: true,
-		sats: true,
-		eonet: true,
-		launches: true,
-		freight: true,
-		grid: false,
-		lanes: true,
-		conflict: true
-	},
+	layers: { ...LAYERS_OFF },
+	layerEpoch: LAYER_EPOCH,
 	imagery: "s2cloudless",
 	date: daysAgo(4),
 	compareDate: daysAgo(14),
@@ -569,6 +573,7 @@ var useAppStore = create()(persist((set) => ({
 		},
 		audit: [audit("party-label", siteId, `${party} · ${reason}`), ...s.audit].slice(0, 200)
 	})),
+	pushAudit: (action, target, reason) => set((s) => ({ audit: [audit(action, target, reason), ...s.audit].slice(0, 200) })),
 	addBox: (box) => set((s) => ({
 		customBoxes: [...s.customBoxes, box],
 		audit: [audit("watchbox-add", box.id, box.name), ...s.audit].slice(0, 200)
@@ -706,7 +711,9 @@ var useAppStore = create()(persist((set) => ({
 		modelWeights: s.modelWeights,
 		chipSamples: s.chipSamples,
 		look: s.look,
-		globeOn: s.globeOn
+		globeOn: s.globeOn,
+		layers: s.layers,
+		layerEpoch: s.layerEpoch
 	}),
 	merge: (persisted, current) => {
 		const p = persisted ?? {};
@@ -717,26 +724,11 @@ var useAppStore = create()(persist((set) => ({
 			...current,
 			...p,
 			changeLog: sortLog([...have.values()]),
-			layers: {
-				...current.layers,
-				...p.layers ?? {},
-				control: true,
-				flights: true,
-				vessels: true,
-				osm: p.layers?.osm ?? false,
-				gdelt: p.layers?.gdelt ?? true,
-				corridors: p.layers?.corridors ?? true,
-				rsfWatch: p.layers?.rsfWatch ?? true,
-				vista: p.layers?.vista ?? true,
-				quakes: p.layers?.quakes ?? true,
-				sats: p.layers?.sats ?? true,
-				eonet: p.layers?.eonet ?? true,
-				launches: p.layers?.launches ?? true,
-				freight: p.layers?.freight ?? true,
-				grid: p.layers?.grid ?? false,
-				lanes: p.layers?.lanes ?? true,
-				conflict: p.layers?.conflict ?? true
-			},
+			layers: (p.layerEpoch ?? 0) >= LAYER_EPOCH ? {
+				...LAYERS_OFF,
+				...p.layers ?? {}
+			} : { ...LAYERS_OFF },
+			layerEpoch: LAYER_EPOCH,
 			controlUpdates: p.controlUpdates ?? [],
 			fuaeLog: p.fuaeLog ?? [],
 			listOrder: p.listOrder === "oldest" ? "oldest" : "newest",

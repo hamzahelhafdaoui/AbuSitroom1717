@@ -599,6 +599,46 @@ var Search = createLucideIcon("search", [["path", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Share2 = createLucideIcon("share-2", [
+	["circle", {
+		cx: "18",
+		cy: "5",
+		r: "3",
+		key: "gq8acd"
+	}],
+	["circle", {
+		cx: "6",
+		cy: "12",
+		r: "3",
+		key: "w7nqdw"
+	}],
+	["circle", {
+		cx: "18",
+		cy: "19",
+		r: "3",
+		key: "1xt0gg"
+	}],
+	["line", {
+		x1: "8.59",
+		x2: "15.42",
+		y1: "13.51",
+		y2: "17.49",
+		key: "47mynk"
+	}],
+	["line", {
+		x1: "15.41",
+		x2: "8.59",
+		y1: "6.51",
+		y2: "10.49",
+		key: "1n3mei"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Ship = createLucideIcon("ship", [
 	["path", {
 		d: "M12 10.189V14",
@@ -693,4 +733,4 @@ var X = createLucideIcon("x", [["path", {
 	key: "d8bk6v"
 }]]);
 //#endregion
-export { Check as A, Eye as C, ClipboardList as D, Copy as E, CircleHelp as O, FileText as S, Download as T, Minus as _, Ship as a, Focus as b, Ruler as c, Radio as d, Printer as f, Newspaper as g, PanelRight as h, Shield as i, ArrowLeft as j, ChevronDown as k, Rocket as l, Plane as m, TriangleAlert as n, Search as o, Plus as p, Sparkles as r, Satellite as s, X as t, RefreshCw as u, LoaderCircle as v, ExternalLink as w, Flame as x, Layers as y };
+export { ChevronDown as A, FileText as C, Copy as D, Download as E, ArrowLeft as M, ClipboardList as O, Flame as S, ExternalLink as T, Newspaper as _, Ship as a, Layers as b, Satellite as c, RefreshCw as d, Radio as f, PanelRight as g, Plane as h, Shield as i, Check as j, CircleHelp as k, Ruler as l, Plus as m, TriangleAlert as n, Share2 as o, Printer as p, Sparkles as r, Search as s, X as t, Rocket as u, Minus as v, Eye as w, Focus as x, LoaderCircle as y };
