@@ -326,6 +326,10 @@ function normalizeAdsbPayload(json: unknown): RawAc[] {
   return list.filter((a) => a && typeof a === "object");
 }
 
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function pullAdsbPoint(lat: number, lon: number, dist: number): Promise<RawAc[]> {
   const urls = [
     `https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/${dist}`,
@@ -337,7 +341,10 @@ async function pullAdsbPoint(lat: number, lon: number, dist: number): Promise<Ra
       const rows = normalizeAdsbPayload(JSON.parse(text));
       if (rows.length) return rows;
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.warn("[adsb]", url, err);
+      // Back off before the next mirror when rate-limited.
+      if (/\b429\b/.test(msg)) await sleep(400);
     }
   }
   return [];
@@ -380,12 +387,12 @@ async function pullFlights(): Promise<{ rows: FlightEvent[]; meta: LiveMeta }> {
   ];
   const raw: RawAc[] = [];
   let source = "adsb.lol / adsb.fi";
-  // Parallel with a small concurrency cap to avoid 429s
-  const chunk = 3;
-  for (let i = 0; i < points.length; i += chunk) {
-    const slice = points.slice(i, i + chunk);
-    const batches = await Promise.all(slice.map(([la, lo, d]) => pullAdsbPoint(la, lo, d)));
-    for (const batch of batches) raw.push(...batch);
+  // Sequential points + short pause — parallel fan-out trips 429s on adsb.fi/lol.
+  for (let i = 0; i < points.length; i++) {
+    const [la, lo, d] = points[i]!;
+    const batch = await pullAdsbPoint(la, lo, d);
+    raw.push(...batch);
+    if (i < points.length - 1) await sleep(180);
   }
   if (raw.length === 0) {
     const sky = await pullOpenSky();

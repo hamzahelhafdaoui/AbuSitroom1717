@@ -7,14 +7,11 @@
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
       "hasCanvas": true,
-      "bodyTextLen": 7269,
-      "bodyTextHash": "6b5a48fdb761f3d0e217eba235d40b66985984752da22956d0204ddfca02389c",
+      "bodyTextLen": 7249,
+      "bodyTextHash": "3d040eaa974c68e96fcf2264f0c0175962db41bf3647614b6e9ca35a52f95648",
       "bodyTextPrefix": "200 km Sentinel-2 cloudless 2024 © EOX / Copernicus DOCUMENTATIO",
       "horizontalOverflow": false,
-      "consoleErrors": [
-        "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. live-th-NOAA-20-2026-10-22-1036-9.612-29.956",
-        "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. live-th-NOAA-20-2026-10-22-1036-9.612-29.956"
-      ],
+      "consoleErrors": [],
       "pageErrors": [],
       "screenshot": "/workspace/screenshots/app-builder-preview.png"
     },
@@ -24,14 +21,11 @@
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
       "hasCanvas": true,
-      "bodyTextLen": 4172,
-      "bodyTextHash": "3d4c67b9ae6e15d753c1ebb0d51aad51ab148b281690b3bd385dff516efcea77",
+      "bodyTextLen": 4182,
+      "bodyTextHash": "1bf8cd4aaee90b9c08bd74c8f85fef98d1b24d4228d8c72e503d36a63dc12523",
       "bodyTextPrefix": "200 km Sentinel-2 cloudless 2024 © EOX / Copernicus DOCUMENTATIO",
       "horizontalOverflow": false,
-      "consoleErrors": [
-        "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. live-th-NOAA-20-2026-10-22-1036-9.612-29.956",
-        "Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. live-th-NOAA-20-2026-10-22-1036-9.612-29.956"
-      ],
+      "consoleErrors": [],
       "pageErrors": [],
       "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
     }
