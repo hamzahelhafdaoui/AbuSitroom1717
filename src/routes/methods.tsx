@@ -228,6 +228,15 @@ function Methods() {
         every page. Party-label changes write an audit row with reason.
       </p>
 
+      <h2>Free public feeds (no paid keys)</h2>
+      <p>
+        Live desk ingest uses keyless public sources by default: NASA FIRMS global CSV, adsb.lol /
+        adsb.fi (OpenSky fallback), Hormuz Ship Monitor AIS (Gulf), Google News / Guardian / BBC /
+        Al Jazeera / NYT Africa RSS, USGS / EONET where enabled, and NASA GIBS browse. AI leads
+        cascade xAI → Groq → Gemini → OpenRouter → Pollinations → news-compiled so a Grok quota miss
+        does not blank the Brief tab.
+      </p>
+
       <h2>What we pulled from open dashboards</h2>
       <p>
         World Monitor (koala73/worldmonitor, AGPL) is a useful map of public sources: NASA FIRMS,

@@ -69,7 +69,8 @@ export function NewsPanel({ data, loading }: { data: NewsFeed | null; loading: b
         </span>
       </div>
       <p className="text-[11px] leading-snug text-subtle">
-        Google News wire for Sudan — last 7 days, not conflict-filtered. Headline pins are named-place centroids, not incident coordinates.
+        Free wires (Google News, Guardian, BBC Africa, Al Jazeera, NYT Africa) — last 7 days, not conflict-filtered. Headline pins are named-place centroids, not incident coordinates.
+        {data?.meta.note ? ` ${data.meta.note}` : ""}
         {data?.meta.fetchedAt ? ` Fetched ${data.meta.fetchedAt.slice(11, 16)}Z.` : ""}
       </p>
       {loading && items.length === 0 ? (
@@ -321,13 +322,14 @@ export function BriefPanel({
         ))}
         <Button size="sm" className="ml-auto" onClick={onRun} disabled={loading}>
           {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-          {loading ? "Searching" : "AI 48h"}
+          {loading ? "Searching" : "Refresh leads"}
         </Button>
       </div>
       <p className="mb-3 text-[11px] leading-snug text-subtle">
-        Auto-generated military-intelligence assessment from the sweep. Observation ≠ assessment. Documentation only — no targeting.
+        Assessment + one-pager compile from the sweep with no LLM. Leads try xAI → Groq → Gemini → OpenRouter → free Pollinations → news-compiled. Observation ≠ assessment. Docs only.
         {s ? ` Window ${s.windowStart.slice(11, 16)}–${s.windowEnd.slice(11, 16)}Z.` : ""}
         {doc ? ` ${doc.sections.length} sections · ${doc.annotations.length} map annotations.` : ""}
+        {data?.model ? ` Leads model: ${data.model}.` : ""}
       </p>
 
       {view === "doc" && doc ? <AssessmentDoc doc={doc} onOpenAnno={onOpenAnno} /> : null}
@@ -542,15 +544,18 @@ function Leads({ data, loading }: { data: AiBrief | null; loading: boolean }) {
   return (
     <div>
       <p className="text-[11px] leading-snug text-subtle">
-        Optional Grok pass over 48 hours of public reporting. Leads, not confirmation. Does not fire on page load.
+        Optional 48h lead pack. Tries free/public LLM cascade, then news-compiled headlines if quota is exhausted. Leads, not confirmation. Does not fire on page load.
       </p>
       {!data && !loading ? (
         <p className="mt-3 rounded-xl border border-border bg-raised p-3 text-sm text-muted">
-          Press AI 48h. The one-pager above already compiled from the sweep without spending quota.
+          Press Refresh leads. Assessment and one-pager above already compile from the sweep without any LLM quota.
         </p>
       ) : null}
+      {data?.error ? (
+        <p className="mt-3 rounded-xl border border-border bg-raised p-3 text-[11px] leading-snug text-muted">{data.error}</p>
+      ) : null}
       {data && !data.ok ? (
-        <p className="mt-3 rounded-xl border border-damage/40 bg-damage/10 p-3 text-sm text-damage">{data.error}</p>
+        <p className="mt-3 rounded-xl border border-damage/40 bg-damage/10 p-3 text-sm text-damage">No leads this cycle.</p>
       ) : null}
       {data?.commander ? (
         <p className="mt-3 rounded-xl border border-accent/30 bg-surface/60 p-3 text-sm leading-relaxed">{data.commander}</p>

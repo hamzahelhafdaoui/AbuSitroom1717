@@ -1,10 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { DOCTRINE_SYSTEM } from "@/lib/doctrine";
+import { completeBriefLlm } from "@/lib/llm";
+import { pullNews } from "@/lib/news";
 import { geocodePlace } from "@/lib/osint";
-import type { AiBrief, BriefItem } from "@/lib/types";
+import type { AiBrief, BriefItem, NewsItem } from "@/lib/types";
 
-const MODEL = "grok-4.5";
-const TTL_MS = 30 * 60_000;
+const MODEL_FALLBACK = "news-compiled";
+const TTL_MS = 20 * 60_000;
 
 const PROMPT = `Using only public reporting from the LAST 48 HOURS on Sudan and adjacent theaters (Chad, Libya, Egypt, Ethiopia, Somalia, UAE, Eritrea, Red Sea), return ONLY JSON (no fences):
 
@@ -26,7 +28,8 @@ const PROMPT = `Using only public reporting from the LAST 48 HOURS on Sudan and 
 category one of: strike, buildup, air, control, supply, displacement, diplomacy, atrocity
 confidence one of: reported, corroborated, single-source
 Up to 8 items, ordered by significance. Fewer is better than padding.
-summary <= 240 chars. Prefer named outlets. Separate claimed from corroborated.`;
+summary <= 240 chars. Prefer named outlets. Separate claimed from corroborated.
+If a provider quota is exhausted, do not invent events — return fewer items.`;
 
 let cache: { at: number; value: AiBrief } | null = null;
 let inflight: Promise<AiBrief> | null = null;
@@ -77,7 +80,7 @@ function parsePacket(text: string): { items: BriefItem[]; commander?: string; me
         meaning: typeof o.meaning === "string" ? o.meaning.slice(0, 1200) : undefined,
       };
     } catch {
-      /* fall through to array */
+      /* fall through */
     }
   }
   if (arrStart !== -1 && arrEnd > arrStart) {
@@ -90,71 +93,98 @@ function parsePacket(text: string): { items: BriefItem[]; commander?: string; me
   return { items: [] };
 }
 
+function categorizeHeadline(title: string): BriefItem["category"] {
+  const t = title.toLowerCase();
+  if (/displac|refugee|flee|aid|famine|hunger|hospital|clinic/.test(t)) return "displacement";
+  if (/airstrike|strike|bomb|shell|drone|artillery/.test(t)) return "strike";
+  if (/airport|airlift|aircraft|flight|il-76|cargo plane/.test(t)) return "air";
+  if (/convoy|supply|fuel|smuggl|border|logistics/.test(t)) return "supply";
+  if (/seize|control|capture|advance|withdraw|front/.test(t)) return "control";
+  if (/troop|mobilize|build.?up|reinforce|militia/.test(t)) return "buildup";
+  if (/kill|massacre|atrocity|rape|ethnic/.test(t)) return "atrocity";
+  if (/talks|diplomat|ceasefire|sanction|un |au /.test(t)) return "diplomacy";
+  return "diplomacy";
+}
+
+/** Always-on brief from free news wires — no LLM quota required. */
+function compileFromNews(news: NewsItem[]): AiBrief {
+  const now = Date.now();
+  const items: BriefItem[] = [];
+  for (let i = 0; i < news.length && items.length < 8; i++) {
+    const n = news[i]!;
+    const geo = geocodePlace(n.title);
+    items.push({
+      id: `newsbrief:${n.id}`,
+      headline: n.title.slice(0, 200),
+      date: n.date ? n.date.slice(0, 10) : null,
+      category: categorizeHeadline(n.title),
+      location: geo?.name ?? null,
+      confidence: "reported",
+      summary: `Wire item via ${n.source}. Single-source public headline — not an AHSR assessment. Open the link for the outlet’s full piece.`,
+      lat: geo?.lat ?? null,
+      lon: geo?.lon ?? null,
+      geoName: geo?.name ?? null,
+      geoPrecise: geo?.precise ?? false,
+    });
+  }
+  const top = items.slice(0, 3).map((i) => i.headline).join(" · ");
+  return {
+    ok: items.length > 0,
+    model: MODEL_FALLBACK,
+    generatedAt: now,
+    items,
+    citations: [],
+    commander:
+      items.length > 0
+        ? `Public wire digest (no LLM). ${items.length} recent Sudan-theater headlines. Top leads: ${top.slice(0, 320)}. Treat as reported, not corroborated.`
+        : undefined,
+    meaning:
+      "Compiled from free Google News / Guardian / BBC / Al Jazeera / NYT Africa RSS. No generative model was used — quota exhaustion on xAI/Grok does not block this path. Pins are named-place centroids.",
+    error: items.length === 0 ? "No free news items available this cycle." : undefined,
+  };
+}
+
 async function buildFresh(): Promise<AiBrief> {
   const now = Date.now();
-  const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) {
-    return {
-      ok: false,
-      model: MODEL,
-      generatedAt: now,
-      items: [],
-      citations: [],
-      error: "AI brief is unavailable in this environment. The local six-hour SITREP still compiled from the sweep.",
-    };
-  }
-  try {
-    const res = await fetch("https://api.x.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.2,
-        max_tokens: 2200,
-        messages: [
-          { role: "system", content: DOCTRINE_SYSTEM },
-          { role: "user", content: PROMPT },
-        ],
-      }),
-    });
-    if (!res.ok) {
+  const newsFeed = await pullNews().catch(() => null);
+  const news = newsFeed?.items ?? [];
+
+  const llm = await completeBriefLlm(DOCTRINE_SYSTEM, PROMPT);
+  if (llm.ok) {
+    const parsed = parsePacket(llm.text);
+    if (parsed.items.length > 0 || parsed.commander) {
       return {
-        ok: false,
-        model: MODEL,
+        ok: true,
+        model: `${llm.provider}/${llm.model}`,
         generatedAt: now,
-        items: [],
+        items: parsed.items,
         citations: [],
-        error: `xAI API error ${res.status}`,
+        commander: parsed.commander,
+        meaning: parsed.meaning,
       };
     }
-    const body = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const text = body.choices?.[0]?.message?.content ?? "";
-    const parsed = parsePacket(text);
+  }
+
+  const wire = compileFromNews(news);
+  if (wire.ok) {
     return {
-      ok: parsed.items.length > 0 || Boolean(parsed.commander),
-      model: MODEL,
-      generatedAt: now,
-      items: parsed.items,
-      citations: [],
-      commander: parsed.commander,
-      meaning: parsed.meaning,
-      error: parsed.items.length === 0 && !parsed.commander ? "No parseable items this cycle." : undefined,
-    };
-  } catch (err) {
-    return {
-      ok: false,
-      model: MODEL,
-      generatedAt: now,
-      items: [],
-      citations: [],
-      error: err instanceof Error ? err.message : "Brief failed",
+      ...wire,
+      error: llm.error
+        ? `LLM cascade skipped (${llm.error}). Showing free news-compiled leads instead.`
+        : wire.error,
     };
   }
+
+  return {
+    ok: false,
+    model: "none",
+    generatedAt: now,
+    items: [],
+    citations: [],
+    error: llm.error
+      ? `All AI providers failed (${llm.error}). Free news also empty.`
+      : "AI brief unavailable — no LLM key and no news this cycle. The local six-hour SITREP still compiles from the sweep.",
+  };
 }
 
 export const generateAiBrief = createServerFn({ method: "POST" }).handler(async (): Promise<AiBrief> => {
