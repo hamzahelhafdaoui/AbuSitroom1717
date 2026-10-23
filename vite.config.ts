@@ -142,13 +142,15 @@ function authPopupPlugin(): Plugin {
   };
 }
 
-// `0.0.0.0:8080` is the live-preview contract — don't change host/port.
+// Port follows the host environment (v0 preview uses PORT=3000); 3000 is the fallback.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
+const devPort = Number(process.env.PORT) || 3000;
+
 export default defineConfig(({ command, isPreview }) => ({
   server: {
     host: "0.0.0.0",
-    port: 8080,
+    port: devPort,
     strictPort: true,
   },
   preview: {
