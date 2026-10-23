@@ -1,5 +1,10 @@
-node_modules/
-.project_id
-.github_repo
+
 .env
 .env.*
+.github_repo
+.grok/preview.log
+.grok/preview.pid
+# Local build / preview runtime
+node_modules/
+.project_id
+.vercel/output/
