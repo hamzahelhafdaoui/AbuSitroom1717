@@ -226,13 +226,17 @@ export function ensureDbReady(): Promise<void> {
 
 // Server-only eager start: kick PGLite bootstrap as soon as this module loads in
 // Node. Client bundles never hit this path (`getSql` throws in the browser).
+// On Vercel without DATABASE_URL, WASM assets are often missing — do not throw
+// at import time or every route 500s. Desk features that need SQL still fail
+// soft when getSql() is called; the map/feeds path stays up.
 const globalBoot = globalThis as typeof globalThis & {
   __pgBootstrapPromise__?: Promise<void>;
 };
 if (typeof window === "undefined" && dbSource === "pglite") {
+  const onVercel = Boolean(process.env.VERCEL);
   globalBoot.__pgBootstrapPromise__ ??= ensureDbReady().catch((err) => {
     globalBoot.__pgBootstrapPromise__ = undefined;
     console.error("[db] PGLite bootstrap failed:", err);
-    throw err;
+    if (!onVercel) throw err;
   });
 }
