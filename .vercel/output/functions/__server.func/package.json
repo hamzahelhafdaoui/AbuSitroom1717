@@ -1,0 +1,7 @@
+{
+  "name": "abusitroom-vercel-root-shim",
+  "private": true,
+  "scripts": {
+    "build": "node ../../../../scripts/vercel-wrong-root-shim.mjs"
+  }
+}
