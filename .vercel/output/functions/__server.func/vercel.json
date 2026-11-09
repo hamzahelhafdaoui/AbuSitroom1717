@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "installCommand": "cd ../../../.. && npm install",
   "buildCommand": "cd ../../../.. && node scripts/vercel-wrong-root-shim.mjs"
 }
