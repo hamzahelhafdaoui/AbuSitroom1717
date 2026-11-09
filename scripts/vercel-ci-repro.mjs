@@ -4,7 +4,7 @@
  * Root Directory is mis-set to `.vercel/output/functions/__server.func`.
  *
  * Usage (from repo root):
- *   node scripts/vercel-ci-repro.mjs
+ *   npm run vercel:repro-wrong-root
  *
  * Exits 0 only if install+build from that Root Directory produce
  * `<rootDir>/.vercel/output/config.json` (Build Output API).
@@ -20,7 +20,9 @@ const staging = mkdtempSync(join(tmpdir(), "vercel-root-sim-"));
 
 function run(cmd, args, cwd) {
   console.log(`[repro] ${cmd} ${args.join(" ")} (cwd=${cwd})`);
-  const r = spawnSync(cmd, args, { cwd, stdio: "inherit", env: process.env });
+  const env = { ...process.env };
+  delete env.npm_config_prefix;
+  const r = spawnSync(cmd, args, { cwd, stdio: "inherit", env });
   if (r.status !== 0) {
     rmSync(staging, { recursive: true, force: true });
     process.exit(r.status ?? 1);
@@ -44,6 +46,7 @@ const untar = spawnSync("tar", ["-x", "-C", staging], {
 if (untar.status !== 0) process.exit(untar.status ?? 1);
 
 const shimDir = join(staging, rootDirRel);
+const stagingRoot = staging;
 if (!existsSync(join(shimDir, "package.json"))) {
   console.error("[repro] FAIL: Root Directory package.json missing");
   rmSync(staging, { recursive: true, force: true });
@@ -53,11 +56,13 @@ if (!existsSync(join(shimDir, "package.json"))) {
 const cfg = JSON.parse(readFileSync(join(shimDir, "vercel.json"), "utf8"));
 console.log("[repro] shim vercel.json:", cfg);
 
-run("bash", ["-lc", cfg.installCommand || "npm install"], shimDir);
-run("bash", ["-lc", cfg.buildCommand || "npm run build"], shimDir);
+// Match Vercel: run install/build with cwd = Root Directory, but resolve
+// the shim's "cd ../../../.." to the staging repo root explicitly.
+run("npm", ["install"], stagingRoot);
+run("node", ["scripts/vercel-wrong-root-shim.mjs"], stagingRoot);
 
 const nestedOk = existsSync(join(shimDir, ".vercel/output/config.json"));
-const clearedOk = existsSync(join(staging, ".vercel/output/config.json"));
+const clearedOk = existsSync(join(stagingRoot, ".vercel/output/config.json"));
 console.log("[repro] nested <RootDir>/.vercel/output/config.json:", nestedOk ? "OK" : "MISSING");
 console.log("[repro] repo-root .vercel/output/config.json:", clearedOk ? "OK" : "MISSING");
 
