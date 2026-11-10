@@ -3,3 +3,15 @@ node_modules/
 .github_repo
 .env
 .env.*
+
+# Local build / preview runtime
+.grok/preview.log
+.grok/preview.pid
+.vercel/**
+# Exception: Vercel project Root Directory was mis-set to the Nitro function
+# path. Keep a tiny shim there so GitHub deploys can still build.
+!.vercel/output/
+!.vercel/output/functions/
+!.vercel/output/functions/__server.func/
+!.vercel/output/functions/__server.func/package.json
+!.vercel/output/functions/__server.func/vercel.json

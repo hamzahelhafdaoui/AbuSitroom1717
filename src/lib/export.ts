@@ -220,8 +220,18 @@ export function briefingHtml(flights: FlightEvent[], firms: ThermalEvent[], log:
 <h2>Live ingest snapshot</h2>
 <p>FIRMS points in AOI this cycle: ${firms.length}. Live flights: ${flights.filter((f) => f.live).length}. Observations in archive: ${OBSERVATIONS.length}. Sites: ${SITES.length}.</p>
 <h2>Methods appendix</h2>
-<p>Optical browse via NASA GIBS (VIIRS / HLS). Sentinel-1 RTC is a cloud-gap scene, not a vehicle layer. Thermal from NASA FIRMS VIIRS 375 m — a gap is not a negative and a point is not a strike. Flights from public ADS-B. AIS type is not cargo; lane markers are not live ships. Conflict cites are a shipped file, not live ACLED ids. Seeded cards are ingested published posts, not AHSR assessments. Human review required. Auto detections stay confidence 1–2. Analytical language: observation / identification / assessment / judgment. Confidence is not probability. Not a targeting product.</p>
-<footer>Abu Hureirah Situation Room · civilian archive · every page carries this caveat.</footer>
+<ul>
+<li><strong>Optical</strong> — NASA GIBS HLS (~30 m dated) and EOX Sentinel-2 cloudless mosaic (annual, not a date). Sentinel-2 native 10 m cannot census pickups vs technicals.</li>
+<li><strong>SAR</strong> — Sentinel-1 RTC browse for cloudy gaps. Speckle is not wreckage. DET does not run on S1.</li>
+<li><strong>Thermal</strong> — NASA FIRMS VIIRS 375 m. Agricultural burning, flares, and kilns are common false combat cues. A FIRMS gap is a failure, not a silent zero.</li>
+<li><strong>Aviation</strong> — Public ADS-B (adsb.lol / adsb.fi / OpenSky). Coverage in Darfur and desert corridors is sparse. Absence of a track ≠ absence of a flight. Never infer cargo.</li>
+<li><strong>Maritime</strong> — AIS type is typical-for-hull. Lane markers are schematic corridor animation (NOT LIVE AIS).</li>
+<li><strong>Corroboration</strong> — Conflict cites are a shipped citation file, not live ACLED/UCDP ids. News pins are named-place centroids.</li>
+<li><strong>Review</strong> — Nothing is “confirmed” without a human click. Auto detections default to confidence 1–2. Party labels write an audit row with reason.</li>
+<li><strong>Language</strong> — Observation / identification / assessment / judgment stay distinct. Forbidden: targeting, fire control, strike planning, kill-chain language.</li>
+</ul>
+<p>Full methods live at <code>/methods</code>. Ethics / no-targeting policy at <code>/ethics</code>. Analyst SOP at <code>/sop</code>.</p>
+<footer>Abu Hureirah Situation Room · civilian archive · every page carries this caveat · DOCS ONLY</footer>
 </body></html>`;
 }
 

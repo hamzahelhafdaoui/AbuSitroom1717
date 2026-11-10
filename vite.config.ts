@@ -142,10 +142,10 @@ function authPopupPlugin(): Plugin {
   };
 }
 
-// Port follows the host environment (v0 preview uses PORT=3000); 3000 is the fallback.
+// Preview proxy discovers 0.0.0.0:8080. PORT may override for other hosts.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
-const devPort = Number(process.env.PORT) || 3000;
+const devPort = Number(process.env.PORT) || 8080;
 
 export default defineConfig(({ command, isPreview }) => ({
   server: {

@@ -118,7 +118,8 @@ function parseFirmsCsv(csv: string, satellite: string): ThermalEvent[] {
     const daynight = ((cols[iDn] ?? "D") === "N" ? "N" : "D") as "D" | "N";
     const site = nearest(lat, lon, SITES, 6);
     out.push({
-      id: `live-th-${satellite}-${cols[iDate]}-${cols[iTime]}-${lat.toFixed(3)}-${lon.toFixed(3)}`,
+      // Include CSV line index so co-located / same-slot detections never collide as React keys.
+      id: `live-th-${satellite}-${cols[iDate]}-${cols[iTime]}-${lat.toFixed(5)}-${lon.toFixed(5)}-r${i}`,
       lat,
       lon,
       acqDate: cols[iDate] ?? "",
@@ -318,6 +319,17 @@ function toFlight(ac: RawAc, source: string): FlightEvent | null {
   };
 }
 
+function normalizeAdsbPayload(json: unknown): RawAc[] {
+  if (!json || typeof json !== "object") return [];
+  const o = json as { ac?: RawAc[]; aircraft?: RawAc[] };
+  const list = Array.isArray(o.ac) ? o.ac : Array.isArray(o.aircraft) ? o.aircraft : [];
+  return list.filter((a) => a && typeof a === "object");
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function pullAdsbPoint(lat: number, lon: number, dist: number): Promise<RawAc[]> {
   const urls = [
     `https://api.adsb.lol/v2/lat/${lat}/lon/${lon}/dist/${dist}`,
@@ -326,10 +338,13 @@ async function pullAdsbPoint(lat: number, lon: number, dist: number): Promise<Ra
   for (const url of urls) {
     try {
       const text = await fetchText(url, 10000);
-      const json = JSON.parse(text) as { ac?: RawAc[] };
-      if (Array.isArray(json.ac)) return json.ac;
+      const rows = normalizeAdsbPayload(JSON.parse(text));
+      if (rows.length) return rows;
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
       console.warn("[adsb]", url, err);
+      // Back off before the next mirror when rate-limited.
+      if (/\b429\b/.test(msg)) await sleep(400);
     }
   }
   return [];
@@ -361,17 +376,23 @@ async function pullOpenSky(): Promise<RawAc[]> {
 async function pullFlights(): Promise<{ rows: FlightEvent[]; meta: LiveMeta }> {
   // Four boxes, not sixteen. adsb.lol 429s when this desk fans out, and a 429
   // looks identical to "tracking disappeared."
+  // Coverage-rich boxes first (Gulf / Red Sea approaches / Cairo / Addis). Khartoum is usually empty ADS-B.
   const points: [number, number, number][] = [
-    [25.25, 55.36, 220],
-    [30.05, 31.35, 180],
-    [21.54, 39.17, 180],
-    [8.98, 38.8, 160],
+    [25.25, 55.36, 220], // UAE / Al Dhafra
+    [21.54, 39.17, 200], // Jeddah / Red Sea
+    [30.05, 31.35, 180], // Cairo
+    [8.98, 38.8, 160], // Addis
+    [15.6, 32.5, 200], // Khartoum (often gap — still try)
+    [19.6, 37.2, 160], // Port Sudan
   ];
   const raw: RawAc[] = [];
   let source = "adsb.lol / adsb.fi";
-  for (const [la, lo, d] of points) {
+  // Sequential points + short pause — parallel fan-out trips 429s on adsb.fi/lol.
+  for (let i = 0; i < points.length; i++) {
+    const [la, lo, d] = points[i]!;
     const batch = await pullAdsbPoint(la, lo, d);
     raw.push(...batch);
+    if (i < points.length - 1) await sleep(180);
   }
   if (raw.length === 0) {
     const sky = await pullOpenSky();
@@ -409,45 +430,66 @@ async function pullFlights(): Promise<{ rows: FlightEvent[]; meta: LiveMeta }> {
 }
 
 async function pullReports(): Promise<{ rows: Citation[]; meta: LiveMeta }> {
-  const url =
-    "https://api.reliefweb.int/v1/reports?appname=ahsr-sudan&profile=lite&limit=8&sort[]=date:desc&filter[field]=primary_country&filter[value]=sdn";
-  try {
-    const text = await fetchText(url, 10000);
-    const json = JSON.parse(text) as {
-      data?: {
-        id: string;
-        fields?: {
-          title?: string;
-          url?: string;
-          date?: { created?: string };
-          source?: { name?: string }[];
-        };
-      }[];
-    };
-    const rows: Citation[] = (json.data ?? []).map((d) => ({
-      id: `rw-${d.id}`,
-      title: d.fields?.title || "ReliefWeb report",
-      publisher: d.fields?.source?.[0]?.name || "ReliefWeb",
-      date: (d.fields?.date?.created || "").slice(0, 10),
-      url: d.fields?.url || "https://reliefweb.int/",
-      reliability: "high" as const,
-      note: "Humanitarian reporting. Corroboration, not ground truth.",
-    }));
-    return {
-      rows,
-      meta: meta(
-        "ReliefWeb public API",
-        rows.length,
-        "Sudan-tagged humanitarian reports. Corroboration layer only.",
-      ),
-    };
-  } catch (err) {
-    console.warn("[reliefweb]", err);
+  // ReliefWeb v2 requires an approved appname (403 without it). Use free outlet RSS instead.
+  const feeds: { publisher: string; url: string; reliability: Citation["reliability"] }[] = [
+    { publisher: "The Guardian", url: "https://www.theguardian.com/world/sudan/rss", reliability: "high" },
+    { publisher: "BBC Africa", url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml", reliability: "high" },
+    { publisher: "UN News", url: "https://news.un.org/feed/subscribe/en/news/region/africa/feed/rss.xml", reliability: "high" },
+  ];
+  const rows: Citation[] = [];
+  const notes: string[] = [];
+  for (const f of feeds) {
+    try {
+      const xml = await fetchText(f.url, 12000);
+      const blocks = xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
+      let n = 0;
+      for (const b of blocks) {
+        if (n >= 4) break;
+        const title = b.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
+          ?.replace(/<!\[CDATA\[|\]\]>/g, "")
+          .replace(/&amp;/g, "&")
+          .replace(/\s+/g, " ")
+          .trim();
+        const link =
+          b.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1]?.trim() ||
+          b.match(/href="(https?:\/\/[^"]+)"/i)?.[1];
+        const dateRaw = b.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1]?.trim();
+        if (!title || !link) continue;
+        if (f.publisher !== "The Guardian" && !/sudan|darfur|khartoum|fasher|nyala|rsf|saf /i.test(title)) {
+          continue;
+        }
+        const t = dateRaw ? Date.parse(dateRaw) : NaN;
+        rows.push({
+          id: `cite-${f.publisher}-${n}-${link.slice(-24)}`,
+          title,
+          publisher: f.publisher,
+          date: Number.isNaN(t) ? "" : new Date(t).toISOString().slice(0, 10),
+          url: link,
+          reliability: f.reliability,
+          note: "Public RSS corroboration. Not ground truth.",
+        });
+        n += 1;
+      }
+      notes.push(`${f.publisher} ${n}`);
+    } catch (err) {
+      console.warn("[reports]", f.publisher, err);
+      notes.push(`${f.publisher} gap`);
+    }
+  }
+  if (rows.length === 0) {
     return {
       rows: [],
-      meta: meta("ReliefWeb public API", 0, "Unreachable this cycle.", "error"),
+      meta: meta("Public outlet RSS", 0, `Corroboration feeds empty (${notes.join("; ")}).`, "error"),
     };
   }
+  return {
+    rows,
+    meta: meta(
+      "Guardian / BBC / UN News RSS",
+      rows.length,
+      `Free corroboration layer (${notes.join(", ")}). Not ReliefWeb (appname required).`,
+    ),
+  };
 }
 
 async function pullHormuzAis(): Promise<VesselEvent[]> {

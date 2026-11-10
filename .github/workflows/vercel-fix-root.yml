@@ -1,0 +1,35 @@
+name: Fix Vercel Root Directory
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+jobs:
+  clear-root-directory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Clear Root Directory on abusitroom1717
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "No VERCEL_TOKEN secret — skip. Add repo secret VERCEL_TOKEN, or clear Root Directory in the Vercel dashboard (Settings → General → Root Directory → empty)."
+            exit 0
+          fi
+          node scripts/vercel-clear-root-directory.mjs
+      - name: Redeploy preview from repo root
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "No VERCEL_TOKEN — skip redeploy."
+            exit 0
+          fi
+          npm ci
+          npm run build
+          npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN"

@@ -306,6 +306,31 @@ export interface AuditEntry {
   reason: string;
 }
 
+/** Immutable evidence pack for a finding — reproducible, public-data only. */
+export interface EvidenceBundle {
+  id: string;
+  createdAt: string;
+  kind: "site-scene" | "flight" | "alert" | "thermal" | "multi";
+  title: string;
+  lat: number;
+  lon: number;
+  siteId?: string;
+  alertId?: string;
+  flightId?: string;
+  sceneIds: string[];
+  acquisitionTimes: string[];
+  bbox: { west: number; south: number; east: number; north: number };
+  processing: { sensor: string; params: string; scriptHash: string };
+  firmsSubset: ThermalEvent[];
+  flightJson: FlightEvent | null;
+  citations: Citation[];
+  geojson: string;
+  notes: string;
+  confidence: Confidence;
+  screenshotDataUrl?: string;
+  caveats: string;
+}
+
 export interface LiveMeta {
   fetchedAt: string | null;
   recordCount: number;

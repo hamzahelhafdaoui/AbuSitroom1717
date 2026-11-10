@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { ALERTS, CITATIONS, OBSERVATIONS, SITES } from "@/data/catalog";
 import { exportBriefing, exportCsv, exportGeoJSON } from "@/lib/export";
+import { archiveFlight, archiveSiteScene } from "@/lib/evidence";
 import { SEED_REPORTS, imageryLinks, type OsintReport } from "@/lib/osint";
 import { RSF_WATCH } from "@/data/rsf-watch";
 import { mergeFlags, reportsToFlags, alertsToFlags, detectToFlags, type Flag, type ListOrder } from "@/lib/flags";
@@ -138,6 +139,7 @@ export function LeftRail(props: {
   hideDefaultBox: (id: string) => void;
   flights: FlightEvent[];
   firms: ThermalEvent[];
+  onExport?: () => void;
 }) {
   const {
     overlay, date, compareDate, setDate, setCompareDate, swipeOn, setSwipeOn,
@@ -307,7 +309,7 @@ export function LeftRail(props: {
           />
           <label className="mt-2 flex items-center gap-2 text-xs text-muted">
             <input type="checkbox" checked={swipeOn} onChange={(e) => setSwipeOn(e.target.checked)} />
-            Before / after on selected site
+            Before / after on map + selected site
           </label>
           {swipeOn ? (
             <input
@@ -364,6 +366,29 @@ export function LeftRail(props: {
                 />
               ))}
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              className="w-full"
+              onClick={() => {
+                const map = (window as unknown as {
+                  __ahsrMap?: { getBounds: () => { getWest: () => number; getSouth: () => number; getEast: () => number; getNorth: () => number } };
+                }).__ahsrMap;
+                if (!map) return;
+                const b = map.getBounds();
+                setBoxForm({
+                  ...boxForm,
+                  west: b.getWest().toFixed(4),
+                  south: b.getSouth().toFixed(4),
+                  east: b.getEast().toFixed(4),
+                  north: b.getNorth().toFixed(4),
+                  name: boxForm.name || "Map viewport",
+                });
+              }}
+            >
+              Use current map frame
+            </Button>
             <Button size="sm" className="w-full" type="submit">Add box</Button>
           </form>
         ) : null}
@@ -398,8 +423,16 @@ export function LeftRail(props: {
         <Button variant="secondary" size="sm" className="w-full" onClick={() => exportCsv()}>
           <Download className="size-3.5" /> CSV
         </Button>
-        <Button variant="secondary" size="sm" className="w-full" onClick={() => exportBriefing(flights, firms)}>
-          <FileText className="size-3.5" /> PDF briefing
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full"
+          onClick={() => {
+            if (props.onExport) props.onExport();
+            else exportBriefing(flights, firms);
+          }}
+        >
+          <FileText className="size-3.5" /> Export / briefing
         </Button>
       </section>
     </div>
@@ -669,6 +702,7 @@ function QueueOrLog({
           ["fuae", "FUAE"],
           ["rsf", "RSF"],
           ["log", "Log"],
+          ["audit", "Audit"],
           ["queue", "Flags"],
           ["brief", "Brief"],
           ["reports", "Reports"],
@@ -701,6 +735,8 @@ function QueueOrLog({
       </div>
       {rightTab === "log" ? (
         <ChangeLogList />
+      ) : rightTab === "audit" ? (
+        <AuditLogPanel />
       ) : rightTab === "news" ? (
         <NewsPanel data={news} loading={newsLoading} />
       ) : rightTab === "brief" ? (
@@ -937,6 +973,35 @@ function ChangeLogList() {
   );
 }
 
+function AuditLogPanel() {
+  const audit = useAppStore((s) => s.audit);
+  return (
+    <div className="flex h-full flex-col overflow-y-auto p-3">
+      <h2 className="text-xs font-medium uppercase tracking-wider text-subtle">Audit log</h2>
+      <p className="mt-1 text-[11px] leading-snug text-subtle">
+        Party labels, review clicks, watch-box edits, and evidence archives. Who / when / why. Local analyst id until desk sign-in.
+      </p>
+      {audit.length === 0 ? (
+        <p className="mt-4 text-sm text-muted">No audit rows yet. Change a party label or confirm a flag to open the trail.</p>
+      ) : (
+        <ul className="mt-3 space-y-2">
+          {audit.map((a) => (
+            <li key={a.id} className="rounded-xl border border-border bg-raised/40 px-3 py-2">
+              <p className="font-mono text-[10px] tabular-nums text-subtle">
+                {formatUtc(a.at)} · {a.actor}
+              </p>
+              <p className="mt-0.5 text-sm font-medium">{a.action}</p>
+              <p className="text-xs text-muted">
+                {a.target} — {a.reason}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function SiteDetail({
   site, party, obs, flights, onClose, overrideParty,
 }: {
@@ -955,6 +1020,8 @@ function SiteDetail({
   const bbox = padBbox(site.lat, site.lon, 0.08);
   const [reason, setReason] = useState("");
   const [copied, setCopied] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+  const [archiveNote, setArchiveNote] = useState<string | null>(null);
   const coords = `${site.lat.toFixed(5)}, ${site.lon.toFixed(5)}`;
 
   return (
@@ -1003,7 +1070,24 @@ function SiteDetail({
         <Button size="sm" variant="secondary" onClick={() => setSwipeOn(!swipeOn)}>
           {swipeOn ? "Hide compare" : "Before / after"}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="col-span-2"
+          disabled={archiving}
+          onClick={() => {
+            setArchiving(true);
+            setArchiveNote(null);
+            void archiveSiteScene({ siteId: site.id, date, compareDate })
+              .then((b) => setArchiveNote(`Archived ${b.id} · JSON + HTML downloaded`))
+              .catch((e) => setArchiveNote(e instanceof Error ? e.message : "Archive failed"))
+              .finally(() => setArchiving(false));
+          }}
+        >
+          <Download className="size-3.5" /> {archiving ? "Archiving…" : "Screenshot + archive"}
+        </Button>
       </div>
+      {archiveNote ? <p className="mt-1 text-[11px] text-accent">{archiveNote}</p> : null}
 
       <div className="mt-3">
         {swipeOn ? (
@@ -1070,7 +1154,18 @@ function SiteDetail({
           <h3 className="mt-4 text-xs font-medium uppercase tracking-wider text-subtle">Nearby airframes</h3>
           <ul className="mt-2 space-y-1 text-xs">
             {flights.slice(0, 5).map((f) => (
-              <li key={f.id} className="rounded-lg border border-border px-2 py-1.5">{f.typeCode} · {f.hex} · {f.category} · {f.operator || "unknown"}</li>
+              <li key={f.id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-2 py-1.5">
+                <span>{f.typeCode} · {f.hex} · {f.category} · {f.operator || "unknown"}</span>
+                <button
+                  type="button"
+                  className="shrink-0 text-[10px] uppercase tracking-wide text-accent hover:underline"
+                  onClick={() => {
+                    void archiveFlight({ flight: f }).catch(() => undefined);
+                  }}
+                >
+                  Archive
+                </button>
+              </li>
             ))}
           </ul>
         </>

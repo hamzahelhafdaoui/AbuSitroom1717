@@ -77,7 +77,7 @@ export function ExportSheet({
             ? "Sites, control polygons, city markers and watch boxes. Opens in QGIS / geojson.io."
             : kind === "csv"
               ? "Sites, alerts, control cities and the first 400 log rows. Spreadsheet-ready."
-              : "Printable HTML briefing with caveat, control picture, unreviewed queue and recent log."}
+              : "Printable HTML briefing (File → Print → PDF) with caveat, methods appendix, control picture, unreviewed queue and recent log."}
         </p>
         <pre className="mx-3 mt-2 max-h-40 overflow-auto rounded-lg border border-border bg-raised p-2 font-mono text-[10px] leading-relaxed text-muted">
           {file.body.slice(0, 1800)}
