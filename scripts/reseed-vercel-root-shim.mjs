@@ -34,6 +34,8 @@ writeFileSync(
   `${JSON.stringify(
     {
       framework: null,
+      ignoreCommand:
+        "echo '[abusitroom] Skipping deploy: Project Root Directory is mis-set to .vercel/output/functions/__server.func (Build Output), so GitHub cannot build from source. Clear it: Vercel → abusitroom1717 → Settings → General → Root Directory → leave empty (repo root). Then redeploy.' && exit 0",
       installCommand: "cd ../../../.. && npm install",
       buildCommand: "cd ../../../.. && node scripts/vercel-wrong-root-shim.mjs",
     },
