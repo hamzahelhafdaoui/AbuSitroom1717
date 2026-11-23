@@ -36,6 +36,9 @@ import { useFreightState } from "@/lib/freight-state";
 import { LookTray } from "@/components/sensor-fx";
 import { BasemapPicker, LayerStack } from "@/components/map-chrome";
 import { FeedHealth } from "@/components/feed-health";
+import { StatusStrip } from "@/components/status-strip";
+import { MapSwipeOverlay } from "@/components/map-swipe";
+import { ExportSheet } from "@/components/export-sheet";
 import { getS1Scene } from "@/lib/s1";
 import { CONFLICT_CITES } from "@/data/conflict-events";
 import { geocodePlacesClient, parseCoord, searchPlaces, type PlaceHit } from "@/lib/geocode";
@@ -102,7 +105,7 @@ function DateStrip({
       </div>
       <label className="hidden shrink-0 items-center gap-2 text-xs text-muted sm:flex">
         <input type="checkbox" checked={swipeOn} onChange={(e) => setSwipeOn(e.target.checked)} />
-        Compare
+        Map compare
       </label>
       {swipeOn ? (
         <input
@@ -152,6 +155,7 @@ export function Workspace() {
   const [placeFor, setPlaceFor] = useState("");
   const [landed, setLanded] = useState<string | null>(null);
   const [controlOpen, setControlOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const placeReq = useRef(0);
   const freightHits = useFreightState((s) => s.hits);
   const customReports = useAppStore((s) => s.customReports);
@@ -899,6 +903,7 @@ export function Workspace() {
     layers, toggleLayer, imagery, setImagery, partyFilter, setPartyFilter, query, setQuery,
     boxes, boxOpen, setBoxOpen, boxForm, setBoxForm, addBox, removeBox, hideDefaultBox,
     flights, firms,
+    onExport: () => setExportOpen(true),
   };
 
   const rightProps = {
@@ -1412,11 +1417,14 @@ export function Workspace() {
         </button>
       )}
 
+      <MapSwipeOverlay />
+      <ExportSheet open={exportOpen} onClose={() => setExportOpen(false)} flights={flights} firms={firms} />
+
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 hidden p-3 md:block">
         <div className="pointer-events-auto mx-auto mb-2 flex max-w-5xl justify-center">
           <LookTray />
         </div>
-        <div className="pointer-events-auto mx-auto max-w-5xl">
+        <div className="pointer-events-auto mx-auto max-w-5xl space-y-2">
           <DateStrip
             date={date}
             setDate={setDate}
@@ -1426,6 +1434,19 @@ export function Workspace() {
             swipeOn={swipeOn}
             setSwipeOn={setSwipeOn}
             onPickDate={pickDate}
+          />
+          <StatusStrip
+            pins={SITES.length}
+            maritime={(live?.vessels ?? []).filter((v) => v.kind === "ais" || v.kind === "lane").length}
+            records={(live?.feeds.length ?? 0) + (newsFeed?.items.length ?? 0) + ALERTS.length + FLIGHTS.length}
+            firmsMeta={firmsMeta}
+            firmsN={firms.length}
+            flightsMeta={live?.flightsMeta ?? null}
+            flightsLive={liveFlightCount}
+            vesselsMeta={live?.vesselsMeta ?? null}
+            vesselsLive={(live?.vessels ?? []).filter((v) => v.kind === "ais" && v.live).length}
+            osmMeta={live?.osmMeta ?? null}
+            osmN={osm.length}
           />
         </div>
       </div>

@@ -134,7 +134,7 @@ var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 * the dev styles URL for route-scoped CSS collection.
 */
 async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-NY4SskUM.mjs");
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-ChDnVZdM.mjs");
 	const startManifest = tsrStartManifest();
 	let routes = startManifest.routes;
 	routes[rootRouteId];
@@ -156,23 +156,23 @@ async function getStartManifest(matchedRoutes) {
 var manifest = {
 	"01ac50a6b210d7c55e9b45dea72e796cba145e186591bdd88c0094df5a076b33": {
 		functionName: "getLiveBundle_createServerFn_handler",
-		importer: () => import("./live-C81J6t51.mjs")
+		importer: () => import("./live-CYy4_46_.mjs")
 	},
 	"04fa879f1446127c8795b4400dd1711eeb2c60c38332fdebd952c071084b2587": {
 		functionName: "getFirmsWindow_createServerFn_handler",
-		importer: () => import("./live-C81J6t51.mjs")
+		importer: () => import("./live-CYy4_46_.mjs")
 	},
 	"1f5d33602816122be63cf7759c11db5747202a5498921cc12b289e8c314b42dd": {
 		functionName: "generateAiBrief_createServerFn_handler",
-		importer: () => import("./ai-brief-D_x9jXmh.mjs")
+		importer: () => import("./ai-brief-DpInGqF6.mjs")
 	},
 	"25694659f57d8cb1dab129277585d925fdc6da5ea215e03c8718552dfbf761b1": {
 		functionName: "saveDesk_createServerFn_handler",
-		importer: () => import("./control-admin-D5_sy-wQ.mjs")
+		importer: () => import("./control-admin-DMUwVQ82.mjs")
 	},
 	"27eea1047ca4f567dbfa6ca2ef3ee69285ddee2fa8e5f68bd3f061a3c1931f7a": {
 		functionName: "getDesk_createServerFn_handler",
-		importer: () => import("./control-admin-D5_sy-wQ.mjs")
+		importer: () => import("./control-admin-DMUwVQ82.mjs")
 	},
 	"30dbc1fe50005d0e6ae9b69af5445e5a4bea7cb6e6708914d1eaba1ea5564d12": {
 		functionName: "getS1Scene_createServerFn_handler",
@@ -184,23 +184,23 @@ var manifest = {
 	},
 	"534092db8484cb1d618e39dace1c97f0e51038567adcb1ce65879546b6fe22bd": {
 		functionName: "getTraffic_createServerFn_handler",
-		importer: () => import("./live-C81J6t51.mjs")
+		importer: () => import("./live-CYy4_46_.mjs")
 	},
 	"641b362bce8b1453776fc05806c0f955d716bb25c197fa42b79b4b00962af98e": {
 		functionName: "getNewsFeed_createServerFn_handler",
-		importer: () => import("./news-DfaqSYOi.mjs")
+		importer: () => import("./news-JOTTsYVq.mjs")
 	},
 	"70bea842e6aa616cde8256913cb436a07a13477bd14e99474ef0dc34e08c4456": {
 		functionName: "getGevWorld_createServerFn_handler",
-		importer: () => import("./live-C81J6t51.mjs")
+		importer: () => import("./live-CYy4_46_.mjs")
 	},
 	"965211bce2b967de6cc0a0bc76fd95a2a6bb44d3de5585b8d0176515f97256f7": {
 		functionName: "deskRole_createServerFn_handler",
-		importer: () => import("./control-admin-D5_sy-wQ.mjs")
+		importer: () => import("./control-admin-DMUwVQ82.mjs")
 	},
 	"ad0526d30eb6b94e90d94a73b4004d482613d3c72975d3b679dac1833152db51": {
 		functionName: "claimDesk_createServerFn_handler",
-		importer: () => import("./control-admin-D5_sy-wQ.mjs")
+		importer: () => import("./control-admin-DMUwVQ82.mjs")
 	},
 	"b92cb569c89837647f88274b87e4fe2b3a23661ae77698d10549593f36023b86": {
 		functionName: "runSatelliteAnalysis_createServerFn_handler",
@@ -1625,7 +1625,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-ExJD1JD2.mjs").then((n) => n.t),
+		import("./router-tg7aS3HG.mjs").then((n) => n.t),
 		import("./start-5Z2QO8AU.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);

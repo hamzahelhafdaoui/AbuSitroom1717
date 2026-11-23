@@ -112,7 +112,12 @@ export function FeedHealth({
   ];
   return (
     <div className="hud-panel pointer-events-auto mb-2 w-[min(16rem,calc(100vw-1.5rem))] p-2 text-[10px] leading-snug">
-      <p className="font-mono tracking-wider text-accent">REC · PUBLIC FEEDS</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-mono tracking-wider text-accent">REC · PUBLIC FEEDS</p>
+        <span className="rounded-full border border-rsf/70 bg-rsf/20 px-1.5 py-0.5 font-mono text-[9px] tracking-wider text-fg">
+          DOCS ONLY
+        </span>
+      </div>
       <div className="mt-1 flex gap-1">
         {(["24h", "48h", "7d"] as const).map((w) => (
           <button

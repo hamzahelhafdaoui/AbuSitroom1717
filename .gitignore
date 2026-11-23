@@ -3,3 +3,15 @@ node_modules/
 .github_repo
 .env
 .env.*
+
+# Local preview runtime (not Build Output)
+.grok/preview.log
+.grok/preview.pid
+
+# Keep Vercel project link / anonymous claim tokens out of git
+.vercel/*
+!.vercel/output/
+!.vercel/output/**
+
+# Staging leftover from wrong-root shim
+.vercel/output.__stage/

@@ -77,7 +77,7 @@ export const LAYERS_OFF: Record<LayerKey, boolean> = {
 /** Bump when the quiet-map default should replace a saved "everything on" layout once. */
 const LAYER_EPOCH = 3;
 
-export type RightTab = "queue" | "reports" | "news" | "brief" | "feeds" | "log" | "fuae" | "rsf";
+export type RightTab = "queue" | "reports" | "news" | "brief" | "feeds" | "log" | "audit" | "fuae" | "rsf";
 
 export interface FlyTarget {
   lat: number;
@@ -163,6 +163,7 @@ interface AppState {
   setQuery: (q: string) => void;
   reviewAlert: (id: string, state: ReviewState, note: string, confidence: Confidence) => void;
   overrideParty: (siteId: string, party: Party, reason: string) => void;
+  pushAudit: (action: string, target: string, reason: string) => void;
   addBox: (box: WatchBox) => void;
   removeBox: (id: string) => void;
   hideDefaultBox: (id: string) => void;
@@ -317,6 +318,10 @@ export const useAppStore = create<AppState>()(
             [siteId]: { party, reason, at: stamp() },
           },
           audit: [audit("party-label", siteId, `${party} · ${reason}`), ...s.audit].slice(0, 200),
+        })),
+      pushAudit: (action, target, reason) =>
+        set((s) => ({
+          audit: [audit(action, target, reason), ...s.audit].slice(0, 200),
         })),
       addBox: (box) =>
         set((s) => ({

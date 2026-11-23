@@ -7,9 +7,9 @@
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
       "hasCanvas": false,
-      "bodyTextLen": 2171,
-      "bodyTextHash": "5000cebed0a11e120edf4ec263c191aff75ebc7268e5e5e4423d25ce9971b9a5",
-      "bodyTextPrefix": "—·S2 mosaic 2024 cloud — AUTO CHANGE SCAN N E S W UNCLASSIFIED /",
+      "bodyTextLen": 6796,
+      "bodyTextHash": "412ac3a5fdca1d3450a1a1db7139bfbfdc17d907b0990dd3b87e435590279f63",
+      "bodyTextPrefix": "—·S2 mosaic 2024 35°C · cloud 28% · optical usable AUTO CHANGE S",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
@@ -21,8 +21,8 @@
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
       "hasCanvas": false,
-      "bodyTextLen": 784,
-      "bodyTextHash": "a3ec667b79464a01ccd8351d041163210b64da793dedd962f36b3cf9b1fe9777",
+      "bodyTextLen": 3992,
+      "bodyTextHash": "9125b32c7146f464192b6c47b4ce657dd683bd6620568b26688239321b35c9f1",
       "bodyTextPrefix": "AUTO CHANGE SCAN N E S W UNCLASSIFIED // OSINT THEATER 13.500 30",
       "horizontalOverflow": false,
       "consoleErrors": [],
@@ -35,6 +35,9 @@
   "verdictFile": "/workspace/screenshots/app-builder-built.json",
   "divergesFromBaseline": true,
   "baselineReasons": [
-    "mobile: body text collapsed (2300 -> 784 chars)"
+    "desktop: canvas disappeared",
+    "desktop: body text replaced (similar length, page start changed)",
+    "mobile: canvas disappeared",
+    "mobile: body text replaced (similar length, page start changed)"
   ]
 }

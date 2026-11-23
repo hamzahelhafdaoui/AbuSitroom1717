@@ -6,10 +6,10 @@
       "height": 800,
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
-      "hasCanvas": false,
-      "bodyTextLen": 2186,
-      "bodyTextHash": "7251d81fb134f16b7a838bd33e57cfc8fce8e9cf4df88a3995000b6130e5d504",
-      "bodyTextPrefix": "—·S2 mosaic 2024 cloud — AUTO CHANGE SCAN N E S W UNCLASSIFIED /",
+      "hasCanvas": true,
+      "bodyTextLen": 7249,
+      "bodyTextHash": "3d040eaa974c68e96fcf2264f0c0175962db41bf3647614b6e9ca35a52f95648",
+      "bodyTextPrefix": "200 km Sentinel-2 cloudless 2024 © EOX / Copernicus DOCUMENTATIO",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
@@ -20,21 +20,19 @@
       "height": 844,
       "status": 200,
       "title": "Abu Hureirah Situation Room: Sudan Wing",
-      "hasCanvas": false,
-      "bodyTextLen": 799,
-      "bodyTextHash": "db2a30c2096b10c91fe0ef4ec470a2c612c3a375e0bccc9945c9b65893a48ae5",
-      "bodyTextPrefix": "AUTO CHANGE SCAN N E S W UNCLASSIFIED // OSINT THEATER 13.500 30",
+      "hasCanvas": true,
+      "bodyTextLen": 4182,
+      "bodyTextHash": "1bf8cd4aaee90b9c08bd74c8f85fef98d1b24d4228d8c72e503d36a63dc12523",
+      "bodyTextPrefix": "200 km Sentinel-2 cloudless 2024 © EOX / Copernicus DOCUMENTATIO",
       "horizontalOverflow": false,
       "consoleErrors": [],
       "pageErrors": [],
       "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
     }
   },
-  "brandWarnings": [],
+  "brandWarnings": [
+    "BRAND WARNING: this looks like a game/canvas app but src/lib/og/site.json is missing \"type\": \"x:game\". X uses og:type=x:game to present the unfurl as a game card — set it in /workspace/src/lib/og/site.json per /workspace/.grok/skills/og/SKILL.md. Do not invent x:type or overload twitter:card as the game signal."
+  ],
   "authWarnings": [],
-  "verdictFile": "/workspace/screenshots/app-builder-preview.json",
-  "divergesFromBaseline": true,
-  "baselineReasons": [
-    "baseline unreadable: ENOENT"
-  ]
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
 }
